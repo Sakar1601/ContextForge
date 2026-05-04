@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ContextForge — claude.ai fixture</title>
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 0; padding: 20px; background: #fff; }
+      .whitespace-pre-wrap { white-space: pre-wrap; }
+    </style>
+  </head>
+  <body>
+    <h2>Claude fixture page</h2>
+    <p style="color:#6b7280;font-size:13px">
+      Mimics the DOM selectors expected by ClaudeAdapter. Used for E2E tests.
+    </p>
+
+    <!-- Conversation turns -->
+    <div data-testid="virtuoso-item-list">
+      <div data-testid="conversation-turn">
+        <div data-testid="human-turn">
+          <div class="whitespace-pre-wrap">How do I set up a pnpm monorepo?</div>
+        </div>
+      </div>
+      <div data-testid="conversation-turn">
+        <div data-testid="assistant-turn">
+          <div class="whitespace-pre-wrap">
+            Create a pnpm-workspace.yaml file at the root listing your package globs,
+            then add a root package.json with workspaces pointing to the same paths.
+          </div>
+        </div>
+      </div>
+      <div data-testid="conversation-turn">
+        <div data-testid="human-turn">
+          <div class="whitespace-pre-wrap">Should I use TypeScript strict mode?</div>
+        </div>
+      </div>
+      <div data-testid="conversation-turn">
+        <div data-testid="assistant-turn">
+          <div class="whitespace-pre-wrap">
+            Yes, strict mode catches many common bugs at compile time. Enable it via
+            &quot;strict&quot;: true in your tsconfig.json compilerOptions.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Composer (matches SELECTORS.composer) -->
+    <div
+      contenteditable="true"
+      enterkeyhint="enter"
+      style="border:1px solid #d1d5db;border-radius:8px;padding:12px;margin-top:16px;min-height:40px;outline:none"
+      aria-label="Message input"
+    >
+      Type your message…
+    </div>
+  </body>
+</html>

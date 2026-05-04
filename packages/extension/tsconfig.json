@@ -6,7 +6,9 @@
     "composite": true
   },
   "references": [
-    { "path": "../shared" }
+    { "path": "../shared" },
+    { "path": "../adapters/claude" },
+    { "path": "../compression" }
   ],
   "include": ["src"]
 }

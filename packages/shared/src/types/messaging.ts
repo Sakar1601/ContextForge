@@ -1,4 +1,6 @@
 import { z } from 'zod'
+import { CapsuleManifestSchema } from './capsule'
+import { AdapterHealthSchema, ConversationTurnSchema } from './adapter'
 
 export const ExtensionMessageSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('CAPTURE_REQUEST'), tabId: z.number() }),
@@ -27,5 +29,17 @@ export const ExtensionMessageSchema = z.discriminatedUnion('type', [
     limit: z.number(),
   }),
   z.object({ type: z.literal('SEARCH_RESPONSE'), capsuleIds: z.array(z.string()) }),
+  // Phase 3: capsule listing and turn extraction
+  z.object({ type: z.literal('LIST_CAPSULES_REQUEST'), limit: z.number() }),
+  z.object({
+    type: z.literal('LIST_CAPSULES_RESPONSE'),
+    manifests: z.array(CapsuleManifestSchema),
+  }),
+  z.object({ type: z.literal('EXTRACT_TURNS_REQUEST') }),
+  z.object({
+    type: z.literal('EXTRACT_TURNS_RESPONSE'),
+    turns: z.array(ConversationTurnSchema),
+    health: AdapterHealthSchema,
+  }),
 ])
 export type ExtensionMessage = z.infer<typeof ExtensionMessageSchema>

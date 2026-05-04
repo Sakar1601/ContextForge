@@ -8,5 +8,8 @@
   },
   "dependencies": {
     "@contextforge/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "jsdom": "^25.0.0"
   }
 }

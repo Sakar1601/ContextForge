@@ -274,6 +274,29 @@ describe('ExtensionMessageSchema', () => {
     ['EMBED_RESPONSE', { type: 'EMBED_RESPONSE', embeddings: [[0.1, 0.2], [0.3, 0.4]] }],
     ['SEARCH_REQUEST', { type: 'SEARCH_REQUEST', query: 'goals', limit: 5 }],
     ['SEARCH_RESPONSE', { type: 'SEARCH_RESPONSE', capsuleIds: ['c1'] }],
+    // Phase 3 messages
+    ['LIST_CAPSULES_REQUEST', { type: 'LIST_CAPSULES_REQUEST', limit: 20 }],
+    [
+      'LIST_CAPSULES_RESPONSE',
+      { type: 'LIST_CAPSULES_RESPONSE', manifests: [] },
+    ],
+    ['EXTRACT_TURNS_REQUEST', { type: 'EXTRACT_TURNS_REQUEST' }],
+    [
+      'EXTRACT_TURNS_RESPONSE (healthy)',
+      {
+        type: 'EXTRACT_TURNS_RESPONSE',
+        turns: [{ role: 'user', content: 'hello', index: 0 }],
+        health: { status: 'healthy' },
+      },
+    ],
+    [
+      'EXTRACT_TURNS_RESPONSE (unhealthy)',
+      {
+        type: 'EXTRACT_TURNS_RESPONSE',
+        turns: [],
+        health: { status: 'unhealthy', reason: 'selector missing' },
+      },
+    ],
   ]
 
   it.each(cases)('parses %s', (_label, msg) => {
