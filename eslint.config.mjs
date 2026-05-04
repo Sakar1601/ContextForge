@@ -4,7 +4,7 @@ import tsParser from '@typescript-eslint/parser'
 /** @type {import('eslint').Linter.Config[]} */
 export default [
   {
-    ignores: ['**/dist/**', '**/*.tsbuildinfo', 'node_modules/**', '**/vite.config.ts'],
+    ignores: ['**/dist/**', '**/coverage/**', '**/*.tsbuildinfo', 'node_modules/**', '**/vite.config.ts'],
   },
   {
     files: ['packages/*/src/**/*.ts', 'packages/*/src/**/*.tsx', 'packages/adapters/*/src/**/*.ts'],
@@ -20,7 +20,10 @@ export default [
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unsafe-assignment': 'error',
       '@typescript-eslint/consistent-type-imports': ['error', { prefer: 'type-imports' }],
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+      ],
       'no-console': 'warn',
     },
   },
