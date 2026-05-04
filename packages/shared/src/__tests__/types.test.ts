@@ -276,6 +276,33 @@ describe('ExtensionMessageSchema', () => {
     ['SEARCH_RESPONSE', { type: 'SEARCH_RESPONSE', capsuleIds: ['c1'] }],
     // Phase 3 messages
     ['LIST_CAPSULES_REQUEST', { type: 'LIST_CAPSULES_REQUEST', limit: 20 }],
+    // Phase 4 messages
+    ['INJECT_REQUEST (from content script, no tabId)', { type: 'INJECT_REQUEST', capsuleId: 'abc', windowWidth: 1440 }],
+    ['INJECT_REQUEST (from popup, with tabId)', { type: 'INJECT_REQUEST', capsuleId: 'abc', tabId: 5, windowWidth: 800 }],
+    [
+      'INJECT_COMMAND',
+      {
+        type: 'INJECT_COMMAND',
+        manifest: {
+          id: '0'.repeat(64),
+          title: 'Test',
+          summary: 'S',
+          goals: [],
+          constraints: [],
+          decisions: [],
+          openQuestions: [],
+          platform: 'claude',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          turnCount: 1,
+          tokenEstimate: 100,
+          tags: [],
+          parentIds: [],
+          compressed: true,
+        },
+        resolution: 'full',
+      },
+    ],
     [
       'LIST_CAPSULES_RESPONSE',
       { type: 'LIST_CAPSULES_RESPONSE', manifests: [] },

@@ -56,24 +56,36 @@ export class ClaudeAdapter implements SiteAdapter {
     const block = document.createElement('div')
     block.setAttribute('data-contextforge', capsule.id)
     block.style.cssText =
-      'border:1px solid #e5e7eb;border-radius:6px;padding:8px 12px;margin-bottom:8px;font-size:13px;color:#374151'
+      'border:1px solid #bfdbfe;border-radius:6px;padding:8px 12px;margin-bottom:8px;font-size:13px;color:#1e3a5f;background:#eff6ff;white-space:pre-wrap;line-height:1.5'
 
-    const lines: string[] = [`📎 ${capsule.title}`]
+    const addLine = (text: string) => {
+      const p = document.createElement('p')
+      p.style.cssText = 'margin:0 0 2px'
+      p.textContent = text
+      block.appendChild(p)
+    }
+
+    addLine(`📎 ${capsule.title}`)
+
     if (resolution === 'full' || resolution === 'compact') {
-      if (capsule.goals.length) lines.push(`Goals: ${capsule.goals.join('; ')}`)
-      if (capsule.constraints.length) lines.push(`Constraints: ${capsule.constraints.join('; ')}`)
+      if (capsule.goals.length) addLine(`Goals: ${capsule.goals.join('; ')}`)
+      if (capsule.constraints.length) addLine(`Constraints: ${capsule.constraints.join('; ')}`)
     }
     if (resolution === 'full') {
-      if (capsule.decisions.length) lines.push(`Decisions: ${capsule.decisions.join('; ')}`)
-      if (capsule.openQuestions.length)
-        lines.push(`Open: ${capsule.openQuestions.join('; ')}`)
+      if (capsule.decisions.length) addLine(`Decisions: ${capsule.decisions.join('; ')}`)
+      if (capsule.openQuestions.length) addLine(`Open: ${capsule.openQuestions.join('; ')}`)
     }
     if (resolution === 'minimal') {
-      lines.length = 1
-      lines.push(capsule.summary)
+      addLine(capsule.summary)
     }
 
-    block.textContent = lines.join('\n')
+    // Provenance footer — always present
+    const footer = document.createElement('small')
+    footer.setAttribute('data-contextforge-footer', '')
+    footer.style.cssText = 'display:block;margin-top:6px;color:#6b7280;font-size:11px;border-top:1px solid #dbeafe;padding-top:4px'
+    footer.textContent = `Context from: ${capsule.title} via ContextForge`
+    block.appendChild(footer)
+
     target.parentElement?.insertBefore(block, target)
     return block
   }

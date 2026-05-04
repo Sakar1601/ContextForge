@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { CapsuleManifestSchema } from './capsule'
-import { AdapterHealthSchema, ConversationTurnSchema } from './adapter'
+import { AdapterHealthSchema, ConversationTurnSchema, InjectionResolutionSchema } from './adapter'
 
 export const ExtensionMessageSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('CAPTURE_REQUEST'), tabId: z.number() }),
@@ -8,7 +8,8 @@ export const ExtensionMessageSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('INJECT_REQUEST'),
     capsuleId: z.string(),
-    tabId: z.number(),
+    tabId: z.number().optional(),
+    windowWidth: z.number().optional(),
   }),
   z.object({
     type: z.literal('INJECT_RESPONSE'),
@@ -40,6 +41,12 @@ export const ExtensionMessageSchema = z.discriminatedUnion('type', [
     type: z.literal('EXTRACT_TURNS_RESPONSE'),
     turns: z.array(ConversationTurnSchema),
     health: AdapterHealthSchema,
+  }),
+  // Phase 4: injection command (SW → content script)
+  z.object({
+    type: z.literal('INJECT_COMMAND'),
+    manifest: CapsuleManifestSchema,
+    resolution: InjectionResolutionSchema,
   }),
 ])
 export type ExtensionMessage = z.infer<typeof ExtensionMessageSchema>

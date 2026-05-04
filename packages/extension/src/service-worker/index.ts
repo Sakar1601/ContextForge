@@ -3,30 +3,33 @@
 // The DB and repositories are module-level constants: Dexie opens lazily and
 // holds no mutable JS state, so this is compliant with MV3 discipline.
 
-import { commit } from '@contextforge/shared'
+import { commit, selectResolution } from '@contextforge/shared'
 import type { ConversationTurn } from '@contextforge/shared'
 import { compress } from '@contextforge/compression'
 import { ContextForgeDB } from '../storage/db'
 import { CapsuleRepository } from '../storage/repositories/capsule-repository'
 import { BodyRepository } from '../storage/repositories/body-repository'
+import { ProvenanceRepository } from '../storage/repositories/provenance-repository'
 
 const db = new ContextForgeDB()
 const capsuleRepo = new CapsuleRepository(db)
 const bodyRepo = new BodyRepository(db)
+const provenanceRepo = new ProvenanceRepository(db)
 
 chrome.runtime.onMessage.addListener(
   (
     msg: { type: string; [k: string]: unknown },
-    _sender,
+    sender: chrome.runtime.MessageSender,
     sendResponse: (r: unknown) => void,
   ) => {
-    handleMessage(msg, sendResponse)
+    handleMessage(msg, sender, sendResponse)
     return true // keep channel open for async responses
   },
 )
 
 async function handleMessage(
   msg: { type: string; [k: string]: unknown },
+  sender: chrome.runtime.MessageSender,
   sendResponse: (r: unknown) => void,
 ) {
   try {
@@ -41,6 +44,15 @@ async function handleMessage(
       case 'CAPTURE_REQUEST': {
         const tabId = msg.tabId as number
         await handleCapture(tabId, sendResponse)
+        break
+      }
+
+      case 'INJECT_REQUEST': {
+        const capsuleId = msg.capsuleId as string
+        const windowWidth = typeof msg.windowWidth === 'number' ? msg.windowWidth : 1200
+        // tabId from sender (content script) or explicit (popup)
+        const tabId = sender.tab?.id ?? (typeof msg.tabId === 'number' ? msg.tabId : undefined)
+        await handleInject(capsuleId, windowWidth, tabId, sendResponse)
         break
       }
 
@@ -63,8 +75,45 @@ async function handleMessage(
   }
 }
 
+async function handleInject(
+  capsuleId: string,
+  windowWidth: number,
+  tabId: number | undefined,
+  sendResponse: (r: unknown) => void,
+) {
+  if (!tabId) {
+    sendResponse({ type: 'INJECT_RESPONSE', success: false, error: 'No tab context' })
+    return
+  }
+
+  const manifest = await capsuleRepo.get(capsuleId)
+  if (!manifest) {
+    sendResponse({ type: 'INJECT_RESPONSE', success: false, error: 'Capsule not found' })
+    return
+  }
+
+  const resolution = selectResolution(windowWidth)
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- chrome.tabs.sendMessage returns any
+  const result = await chrome.tabs.sendMessage(tabId, {
+    type: 'INJECT_COMMAND',
+    manifest,
+    resolution,
+  })
+
+  // Save provenance record
+  await provenanceRepo.save({
+    id: crypto.randomUUID(),
+    turnId: `inject-${Date.now()}`,
+    capsuleIds: [capsuleId],
+    platform: manifest.platform,
+    injectedAt: new Date().toISOString(),
+  })
+
+  sendResponse({ type: 'INJECT_RESPONSE', success: true, ...(result as object) })
+}
+
 async function handleCapture(tabId: number, sendResponse: (r: unknown) => void) {
-  // 1. Extract turns from the content script
   const extracted = (await chrome.tabs.sendMessage(tabId, {
     type: 'EXTRACT_TURNS_REQUEST',
   })) as { type: string; turns: unknown[]; health: { status: string; reason?: string } }
@@ -78,15 +127,11 @@ async function handleCapture(tabId: number, sendResponse: (r: unknown) => void) 
     return
   }
 
-  // 2. Get API key
   const storage = await chrome.storage.local.get('anthropicApiKey')
   const apiKey = (storage['anthropicApiKey'] as string | undefined) ?? ''
-
-  // 3. Compress (or raw mode if no key)
   const turns = extracted.turns as ConversationTurn[]
   const result = await compress(turns, apiKey, 'claude')
 
-  // 4. Build manifest fields
   const now = new Date().toISOString()
   const baseFields = result.compressed
     ? {
@@ -113,14 +158,13 @@ async function handleCapture(tabId: number, sendResponse: (r: unknown) => void) 
         compressed: false as const,
       }
 
-  // 5. Commit (computes content-hash id)
   const manifest = await commit(baseFields)
-
-  // 6. Persist
   await capsuleRepo.save(manifest)
   const body = {
     capsuleId: manifest.id,
-    full: result.compressed ? undefined : turns.map((t) => `[${t.role}] ${t.content}`).join('\n\n'),
+    full: result.compressed
+      ? undefined
+      : turns.map((t) => `[${t.role}] ${t.content}`).join('\n\n'),
     chunks: [],
   }
   await bodyRepo.save(body)

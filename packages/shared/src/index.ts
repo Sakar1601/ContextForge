@@ -24,6 +24,8 @@ export type { ExtensionMessage } from './types/messaging'
 
 export { computeCapsuleId } from './dag/hash'
 
+export { selectResolution } from './dag/resolution'
+
 export { commit, branchFrom, merge, diff, cherryPickFields } from './dag/operations'
 export type {
   Branch,

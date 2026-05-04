@@ -10,6 +10,8 @@ const PLATFORM_LABELS: Record<string, string> = {
   gmail: 'Gmail',
 }
 
+const DRAG_MIME = 'application/x-contextforge-capsule'
+
 function timeAgo(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime()
   const mins = Math.floor(diffMs / 60_000)
@@ -27,12 +29,23 @@ interface Props {
 export function CapsuleCard({ manifest }: Props) {
   return (
     <div
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData(DRAG_MIME, manifest.id)
+        e.dataTransfer.effectAllowed = 'copy'
+      }}
       style={{
         padding: '10px 12px',
         borderBottom: '1px solid #f3f4f6',
+        cursor: 'grab',
+        userSelect: 'none',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+        {/* Drag handle indicator */}
+        <span style={{ fontSize: '12px', color: '#d1d5db', marginRight: '2px' }} title="Drag to inject">
+          ⠿
+        </span>
         <span
           style={{
             fontSize: '10px',

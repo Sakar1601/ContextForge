@@ -1,6 +1,7 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest'
 import { ClaudeAdapter } from '../adapter'
 import { SELECTORS } from '../selectors'
+import { setupDropZone } from '../drop-zone'
 
 // jsdom environment is set in vitest.config.ts
 
@@ -165,6 +166,64 @@ describe('ClaudeAdapter', () => {
       expect(text).toContain('Test capsule')
       expect(text).toContain('A summary')
       expect(text).not.toContain('do the thing')
+    })
+
+    it.each(['full', 'compact', 'minimal'] as const)(
+      'always includes the provenance footer for resolution "%s"',
+      (resolution) => {
+        adapter.injectContext(capsule, resolution)
+        const footer = document.querySelector('[data-contextforge-footer]')
+        expect(footer).not.toBeNull()
+        expect(footer?.textContent).toContain('via ContextForge')
+        expect(footer?.textContent).toContain('Test capsule')
+      },
+    )
+  })
+
+  describe('setupDropZone()', () => {
+    beforeEach(() => {
+      document.body.innerHTML = `
+        <div contenteditable="true" enterkeyhint="enter"></div>
+      `
+    })
+
+    function makeDrop(capsuleId: string | null) {
+      // jsdom does not expose DragEvent; use Event + manual dataTransfer
+      const ev = new Event('drop', { bubbles: true, cancelable: true })
+      const types = capsuleId ? ['application/x-contextforge-capsule'] : ['text/plain']
+      Object.defineProperty(ev, 'dataTransfer', {
+        value: {
+          types,
+          dropEffect: 'none',
+          getData: (mime: string) =>
+            mime === 'application/x-contextforge-capsule' && capsuleId ? capsuleId : '',
+        },
+      })
+      return ev
+    }
+
+    it('calls the callback with capsuleId and windowWidth on drop', () => {
+      const onDrop = vi.fn()
+      const teardown = setupDropZone(onDrop)
+      document.dispatchEvent(makeDrop('capsule-abc-123'))
+      expect(onDrop).toHaveBeenCalledWith('capsule-abc-123', expect.any(Number))
+      teardown()
+    })
+
+    it('does not call callback when MIME type is absent', () => {
+      const onDrop = vi.fn()
+      const teardown = setupDropZone(onDrop)
+      document.dispatchEvent(makeDrop(null))
+      expect(onDrop).not.toHaveBeenCalled()
+      teardown()
+    })
+
+    it('removes listeners after teardown', () => {
+      const onDrop = vi.fn()
+      const teardown = setupDropZone(onDrop)
+      teardown()
+      document.dispatchEvent(makeDrop('capsule-xyz'))
+      expect(onDrop).not.toHaveBeenCalled()
     })
   })
 
