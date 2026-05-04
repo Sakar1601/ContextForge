@@ -1,0 +1,10 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/shared" },
+    { "path": "packages/compression" },
+    { "path": "packages/retrieval" },
+    { "path": "packages/adapters/claude" },
+    { "path": "packages/extension" }
+  ]
+}
