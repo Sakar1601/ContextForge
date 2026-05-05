@@ -1,0 +1,9 @@
+{
+  "name": "@contextforge/adapter-chatgpt",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": { "@contextforge/shared": "workspace:*" },
+  "devDependencies": { "jsdom": "^25.0.0" }
+}

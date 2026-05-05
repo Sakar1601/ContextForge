@@ -33,7 +33,57 @@ importers:
         specifier: ^2.0.0
         version: 2.1.9(@types/node@18.19.130)(jsdom@25.0.1)
 
+  packages/adapters/chatgpt:
+    dependencies:
+      '@contextforge/shared':
+        specifier: workspace:*
+        version: link:../../shared
+    devDependencies:
+      jsdom:
+        specifier: ^25.0.0
+        version: 25.0.1
+
   packages/adapters/claude:
+    dependencies:
+      '@contextforge/shared':
+        specifier: workspace:*
+        version: link:../../shared
+    devDependencies:
+      jsdom:
+        specifier: ^25.0.0
+        version: 25.0.1
+
+  packages/adapters/deepseek:
+    dependencies:
+      '@contextforge/shared':
+        specifier: workspace:*
+        version: link:../../shared
+    devDependencies:
+      jsdom:
+        specifier: ^25.0.0
+        version: 25.0.1
+
+  packages/adapters/gemini:
+    dependencies:
+      '@contextforge/shared':
+        specifier: workspace:*
+        version: link:../../shared
+    devDependencies:
+      jsdom:
+        specifier: ^25.0.0
+        version: 25.0.1
+
+  packages/adapters/gmail:
+    dependencies:
+      '@contextforge/shared':
+        specifier: workspace:*
+        version: link:../../shared
+    devDependencies:
+      jsdom:
+        specifier: ^25.0.0
+        version: 25.0.1
+
+  packages/adapters/perplexity:
     dependencies:
       '@contextforge/shared':
         specifier: workspace:*
@@ -57,9 +107,24 @@ importers:
 
   packages/extension:
     dependencies:
+      '@contextforge/adapter-chatgpt':
+        specifier: workspace:*
+        version: link:../adapters/chatgpt
       '@contextforge/adapter-claude':
         specifier: workspace:*
         version: link:../adapters/claude
+      '@contextforge/adapter-deepseek':
+        specifier: workspace:*
+        version: link:../adapters/deepseek
+      '@contextforge/adapter-gemini':
+        specifier: workspace:*
+        version: link:../adapters/gemini
+      '@contextforge/adapter-gmail':
+        specifier: workspace:*
+        version: link:../adapters/gmail
+      '@contextforge/adapter-perplexity':
+        specifier: workspace:*
+        version: link:../adapters/perplexity
       '@contextforge/compression':
         specifier: workspace:*
         version: link:../compression

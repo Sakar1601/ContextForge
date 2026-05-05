@@ -5,4 +5,9 @@ export default defineWorkspace([
   'packages/compression/vitest.config.ts',
   'packages/extension/vitest.config.ts',
   'packages/adapters/claude/vitest.config.ts',
+  'packages/adapters/chatgpt/vitest.config.ts',
+  'packages/adapters/gemini/vitest.config.ts',
+  'packages/adapters/perplexity/vitest.config.ts',
+  'packages/adapters/deepseek/vitest.config.ts',
+  'packages/adapters/gmail/vitest.config.ts',
 ])

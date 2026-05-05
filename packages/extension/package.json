@@ -8,7 +8,12 @@
     "build": "vite build"
   },
   "dependencies": {
+    "@contextforge/adapter-chatgpt": "workspace:*",
     "@contextforge/adapter-claude": "workspace:*",
+    "@contextforge/adapter-deepseek": "workspace:*",
+    "@contextforge/adapter-gemini": "workspace:*",
+    "@contextforge/adapter-gmail": "workspace:*",
+    "@contextforge/adapter-perplexity": "workspace:*",
     "@contextforge/compression": "workspace:*",
     "@contextforge/shared": "workspace:*",
     "dexie": "^4.0.0",

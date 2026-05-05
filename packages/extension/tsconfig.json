@@ -8,6 +8,11 @@
   "references": [
     { "path": "../shared" },
     { "path": "../adapters/claude" },
+    { "path": "../adapters/chatgpt" },
+    { "path": "../adapters/gemini" },
+    { "path": "../adapters/perplexity" },
+    { "path": "../adapters/deepseek" },
+    { "path": "../adapters/gmail" },
     { "path": "../compression" }
   ],
   "include": ["src"]

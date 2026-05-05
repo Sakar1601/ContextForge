@@ -5,6 +5,11 @@
     { "path": "packages/compression" },
     { "path": "packages/retrieval" },
     { "path": "packages/adapters/claude" },
+    { "path": "packages/adapters/chatgpt" },
+    { "path": "packages/adapters/gemini" },
+    { "path": "packages/adapters/perplexity" },
+    { "path": "packages/adapters/deepseek" },
+    { "path": "packages/adapters/gmail" },
     { "path": "packages/extension" }
   ]
 }

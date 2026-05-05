@@ -18,11 +18,20 @@
     "type": "module"
   },
   "content_scripts": [
-    {
-      "matches": ["https://claude.ai/*"],
-      "js": ["src/content/claude.ts"]
-    }
+    { "matches": ["https://claude.ai/*"],          "js": ["src/content/claude.ts"] },
+    { "matches": ["https://chatgpt.com/*"],         "js": ["src/content/chatgpt.ts"] },
+    { "matches": ["https://gemini.google.com/*"],   "js": ["src/content/gemini.ts"] },
+    { "matches": ["https://www.perplexity.ai/*"],   "js": ["src/content/perplexity.ts"] },
+    { "matches": ["https://chat.deepseek.com/*"],   "js": ["src/content/deepseek.ts"] },
+    { "matches": ["https://mail.google.com/*"],     "js": ["src/content/gmail.ts"] }
   ],
   "permissions": ["storage", "alarms", "offscreen", "tabs"],
-  "host_permissions": ["https://claude.ai/*"]
+  "host_permissions": [
+    "https://claude.ai/*",
+    "https://chatgpt.com/*",
+    "https://gemini.google.com/*",
+    "https://www.perplexity.ai/*",
+    "https://chat.deepseek.com/*",
+    "https://mail.google.com/*"
+  ]
 }
