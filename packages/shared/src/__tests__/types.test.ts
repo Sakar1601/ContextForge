@@ -308,6 +308,15 @@ describe('ExtensionMessageSchema', () => {
       { type: 'LIST_CAPSULES_RESPONSE', manifests: [] },
     ],
     ['EXTRACT_TURNS_REQUEST', { type: 'EXTRACT_TURNS_REQUEST' }],
+    // Phase 5 messages
+    ['GET_CAPSULE_GRAPH_REQUEST', { type: 'GET_CAPSULE_GRAPH_REQUEST', capsuleId: 'abc' }],
+    ['GET_CAPSULE_GRAPH_RESPONSE', { type: 'GET_CAPSULE_GRAPH_RESPONSE', manifests: [] }],
+    ['ROLLBACK_REQUEST', { type: 'ROLLBACK_REQUEST', capsuleId: 'abc' }],
+    ['ROLLBACK_RESPONSE (ok)', { type: 'ROLLBACK_RESPONSE', success: true }],
+    ['BRANCH_CREATE_REQUEST', { type: 'BRANCH_CREATE_REQUEST', name: 'feature', tipId: 'abc' }],
+    ['BRANCH_CREATE_RESPONSE', { type: 'BRANCH_CREATE_RESPONSE', branch: { name: 'feature', tipId: 'abc' } }],
+    ['BRANCH_LIST_REQUEST', { type: 'BRANCH_LIST_REQUEST' }],
+    ['BRANCH_LIST_RESPONSE', { type: 'BRANCH_LIST_RESPONSE', branches: [{ name: 'main', tipId: 'abc' }] }],
     [
       'EXTRACT_TURNS_RESPONSE (healthy)',
       {

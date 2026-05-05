@@ -48,5 +48,27 @@ export const ExtensionMessageSchema = z.discriminatedUnion('type', [
     manifest: CapsuleManifestSchema,
     resolution: InjectionResolutionSchema,
   }),
+  // Phase 5: version graph, rollback, branches
+  z.object({ type: z.literal('GET_CAPSULE_GRAPH_REQUEST'), capsuleId: z.string() }),
+  z.object({
+    type: z.literal('GET_CAPSULE_GRAPH_RESPONSE'),
+    manifests: z.array(CapsuleManifestSchema),
+  }),
+  z.object({ type: z.literal('ROLLBACK_REQUEST'), capsuleId: z.string() }),
+  z.object({ type: z.literal('ROLLBACK_RESPONSE'), success: z.boolean() }),
+  z.object({
+    type: z.literal('BRANCH_CREATE_REQUEST'),
+    name: z.string(),
+    tipId: z.string(),
+  }),
+  z.object({
+    type: z.literal('BRANCH_CREATE_RESPONSE'),
+    branch: z.object({ name: z.string(), tipId: z.string() }),
+  }),
+  z.object({ type: z.literal('BRANCH_LIST_REQUEST') }),
+  z.object({
+    type: z.literal('BRANCH_LIST_RESPONSE'),
+    branches: z.array(z.object({ name: z.string(), tipId: z.string() })),
+  }),
 ])
 export type ExtensionMessage = z.infer<typeof ExtensionMessageSchema>

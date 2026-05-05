@@ -12,10 +12,13 @@
     "@contextforge/compression": "workspace:*",
     "@contextforge/shared": "workspace:*",
     "dexie": "^4.0.0",
+    "dagre": "^0.8.5",
     "react": "^18.3.0",
-    "react-dom": "^18.3.0"
+    "react-dom": "^18.3.0",
+    "reactflow": "11"
   },
   "devDependencies": {
+    "@types/dagre": "^0.7.52",
     "@crxjs/vite-plugin": "beta",
     "@types/chrome": "^0.0.270",
     "@types/react": "^18.3.0",

@@ -4,7 +4,7 @@
 // holds no mutable JS state, so this is compliant with MV3 discipline.
 
 import { commit, selectResolution } from '@contextforge/shared'
-import type { ConversationTurn } from '@contextforge/shared'
+import type { CapsuleManifest, ConversationTurn } from '@contextforge/shared'
 import { compress } from '@contextforge/compression'
 import { ContextForgeDB } from '../storage/db'
 import { CapsuleRepository } from '../storage/repositories/capsule-repository'
@@ -63,6 +63,40 @@ async function handleMessage(
           type: 'ADAPTER_HEALTH_REQUEST',
         })
         sendResponse(response)
+        break
+      }
+
+      case 'GET_CAPSULE_GRAPH_REQUEST': {
+        const capsuleId = msg.capsuleId as string
+        const all = await collectGraph(capsuleId)
+        sendResponse({ type: 'GET_CAPSULE_GRAPH_RESPONSE', manifests: all })
+        break
+      }
+
+      case 'ROLLBACK_REQUEST': {
+        const capsuleId = msg.capsuleId as string
+        const manifest = await capsuleRepo.get(capsuleId)
+        if (!manifest) { sendResponse({ type: 'ROLLBACK_RESPONSE', success: false }); break }
+        // Store the active version keyed by root id (first ancestor with no parents)
+        const root = await findRoot(capsuleId)
+        await chrome.storage.local.set({ [`active_${root}`]: capsuleId })
+        sendResponse({ type: 'ROLLBACK_RESPONSE', success: true })
+        break
+      }
+
+      case 'BRANCH_CREATE_REQUEST': {
+        const { name, tipId } = msg as { type: string; name: string; tipId: string }
+        const existing = (await chrome.storage.local.get('branches')) as { branches?: Array<{ name: string; tipId: string }> }
+        const branches = existing.branches ?? []
+        branches.push({ name, tipId })
+        await chrome.storage.local.set({ branches })
+        sendResponse({ type: 'BRANCH_CREATE_RESPONSE', branch: { name, tipId } })
+        break
+      }
+
+      case 'BRANCH_LIST_REQUEST': {
+        const stored = (await chrome.storage.local.get('branches')) as { branches?: Array<{ name: string; tipId: string }> }
+        sendResponse({ type: 'BRANCH_LIST_RESPONSE', branches: stored.branches ?? [] })
         break
       }
 
@@ -170,4 +204,40 @@ async function handleCapture(tabId: number, sendResponse: (r: unknown) => void) 
   await bodyRepo.save(body)
 
   sendResponse({ type: 'CAPTURE_RESPONSE', capsuleId: manifest.id })
+}
+
+async function collectGraph(capsuleId: string): Promise<CapsuleManifest[]> {
+  const seen = new Set<string>()
+  const queue = [capsuleId]
+  const result: CapsuleManifest[] = []
+
+  while (queue.length > 0) {
+    const id = queue.shift()!
+    if (seen.has(id)) continue
+    seen.add(id)
+    const manifest = await capsuleRepo.get(id)
+    if (!manifest) continue
+    result.push(manifest)
+    for (const parentId of manifest.parentIds) {
+      if (!seen.has(parentId)) queue.push(parentId)
+    }
+    const children = await capsuleRepo.getChildren(id)
+    for (const childId of children) {
+      if (!seen.has(childId)) queue.push(childId)
+    }
+  }
+
+  return result
+}
+
+async function findRoot(capsuleId: string): Promise<string> {
+  let id = capsuleId
+  for (let i = 0; i < 100; i++) {
+    const manifest = await capsuleRepo.get(id)
+    if (!manifest || manifest.parentIds.length === 0) return id
+    const firstParent = manifest.parentIds[0]
+    if (!firstParent) return id
+    id = firstParent
+  }
+  return id
 }

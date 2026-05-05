@@ -73,6 +73,19 @@ export function CapsuleCard({ manifest }: Props) {
         <span style={{ fontSize: '11px', color: '#9ca3af', marginLeft: 'auto' }}>
           {timeAgo(manifest.updatedAt)}
         </span>
+        <button
+          draggable={false}
+          onClick={(e) => {
+            e.stopPropagation()
+            void chrome.tabs.create({
+              url: `${chrome.runtime.getURL('src/graph/index.html')}?id=${manifest.id}`,
+            })
+          }}
+          title="View version history"
+          style={{ fontSize: '11px', padding: '1px 5px', borderRadius: '4px', border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer', color: '#6b7280' }}
+        >
+          ⏱
+        </button>
       </div>
       <div style={{ fontSize: '13px', fontWeight: 500, color: '#111827' }}>{manifest.title}</div>
       {manifest.summary && (
