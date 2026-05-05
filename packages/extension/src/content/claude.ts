@@ -1,12 +1,13 @@
-import { ClaudeAdapter, setupDropZone } from '@contextforge/adapter-claude'
+import { ClaudeAdapter, setupDropZone, SELECTORS } from '@contextforge/adapter-claude'
 import type { CapsuleManifest, InjectionResolution } from '@contextforge/shared'
+import { setupSuggest } from './suggest'
 
 const adapter = new ClaudeAdapter()
 
-// Drop zone listeners persist for the lifetime of the page — no teardown needed.
 setupDropZone((capsuleId, windowWidth) => {
   void chrome.runtime.sendMessage({ type: 'INJECT_REQUEST', capsuleId, windowWidth })
 })
+setupSuggest(SELECTORS.composer)
 
 chrome.runtime.onMessage.addListener(
   (msg: { type: string; manifest?: CapsuleManifest; resolution?: InjectionResolution }, _sender, sendResponse) => {

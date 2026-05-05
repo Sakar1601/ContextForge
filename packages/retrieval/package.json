@@ -7,6 +7,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@contextforge/shared": "workspace:*"
+    "@contextforge/shared": "workspace:*",
+    "zod": "^3.23.0"
   }
 }

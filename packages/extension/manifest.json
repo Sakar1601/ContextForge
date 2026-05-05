@@ -9,7 +9,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["src/graph/index.html"],
+      "resources": ["src/graph/index.html", "src/offscreen/index.html"],
       "matches": ["<all_urls>"]
     }
   ],

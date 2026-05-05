@@ -10,7 +10,8 @@ export default defineConfig({
     rollupOptions: {
       // Explicitly include the graph page so CRXJS bundles its JS entry point.
       input: {
-        graph: resolve(import.meta.dirname, 'src/graph/index.html'),
+        graph:     resolve(import.meta.dirname, 'src/graph/index.html'),
+        offscreen: resolve(import.meta.dirname, 'src/offscreen/index.html'),
       },
     },
   },

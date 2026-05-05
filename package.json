@@ -10,7 +10,7 @@
     "build": "pnpm --filter @contextforge/extension build"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild"]
+    "onlyBuiltDependencies": ["esbuild", "onnxruntime-node"]
   },
   "devDependencies": {
     "@playwright/test": "^1.45.0",

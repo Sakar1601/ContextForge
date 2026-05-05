@@ -1,8 +1,10 @@
-import { GeminiAdapter } from '@contextforge/adapter-gemini'
+import { GeminiAdapter, SELECTORS } from '@contextforge/adapter-gemini'
 import { setupDropZone } from '@contextforge/adapter-claude'
 import type { CapsuleManifest, InjectionResolution } from '@contextforge/shared'
+import { setupSuggest } from './suggest'
 
 const adapter = new GeminiAdapter()
+setupSuggest(SELECTORS.composer)
 
 setupDropZone((capsuleId, windowWidth) => {
   void chrome.runtime.sendMessage({ type: 'INJECT_REQUEST', capsuleId, windowWidth })

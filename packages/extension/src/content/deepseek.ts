@@ -1,8 +1,10 @@
-import { DeepSeekAdapter } from '@contextforge/adapter-deepseek'
+import { DeepSeekAdapter, SELECTORS } from '@contextforge/adapter-deepseek'
 import { setupDropZone } from '@contextforge/adapter-claude'
 import type { CapsuleManifest, InjectionResolution } from '@contextforge/shared'
+import { setupSuggest } from './suggest'
 
 const adapter = new DeepSeekAdapter()
+setupSuggest(SELECTORS.composer)
 
 setupDropZone((capsuleId, windowWidth) => {
   void chrome.runtime.sendMessage({ type: 'INJECT_REQUEST', capsuleId, windowWidth })

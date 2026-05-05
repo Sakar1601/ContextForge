@@ -1,8 +1,10 @@
-import { GmailAdapter } from '@contextforge/adapter-gmail'
+import { GmailAdapter, SELECTORS } from '@contextforge/adapter-gmail'
 import { setupDropZone } from '@contextforge/adapter-claude'
 import type { CapsuleManifest, InjectionResolution } from '@contextforge/shared'
+import { setupSuggest } from './suggest'
 
 const adapter = new GmailAdapter()
+setupSuggest(SELECTORS.composer)
 
 // Gmail is inject-only — drop zone is the primary interaction.
 setupDropZone((capsuleId, windowWidth) => {

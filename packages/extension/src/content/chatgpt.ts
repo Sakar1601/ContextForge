@@ -1,8 +1,10 @@
-import { ChatGPTAdapter } from '@contextforge/adapter-chatgpt'
+import { ChatGPTAdapter, SELECTORS } from '@contextforge/adapter-chatgpt'
 import { setupDropZone } from '@contextforge/adapter-claude'
 import type { CapsuleManifest, InjectionResolution } from '@contextforge/shared'
+import { setupSuggest } from './suggest'
 
 const adapter = new ChatGPTAdapter()
+setupSuggest(SELECTORS.composer)
 
 setupDropZone((capsuleId, windowWidth) => {
   void chrome.runtime.sendMessage({ type: 'INJECT_REQUEST', capsuleId, windowWidth })

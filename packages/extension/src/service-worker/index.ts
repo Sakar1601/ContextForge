@@ -6,6 +6,7 @@
 import { commit, selectResolution } from '@contextforge/shared'
 import type { CapsuleManifest, ConversationTurn } from '@contextforge/shared'
 import { compress } from '@contextforge/compression'
+import { hybridSearch, capsuleText } from '@contextforge/retrieval'
 import { ContextForgeDB } from '../storage/db'
 import { CapsuleRepository } from '../storage/repositories/capsule-repository'
 import { BodyRepository } from '../storage/repositories/body-repository'
@@ -18,10 +19,12 @@ const provenanceRepo = new ProvenanceRepository(db)
 
 chrome.runtime.onMessage.addListener(
   (
-    msg: { type: string; [k: string]: unknown },
+    msg: { type: string; target?: string; [k: string]: unknown },
     sender: chrome.runtime.MessageSender,
     sendResponse: (r: unknown) => void,
   ) => {
+    // Messages targeted at the offscreen document are handled there; ignore here.
+    if (msg.target === 'offscreen') return false
     handleMessage(msg, sender, sendResponse)
     return true // keep channel open for async responses
   },
@@ -34,6 +37,40 @@ async function handleMessage(
 ) {
   try {
     switch (msg.type) {
+      case 'EMBED_REQUEST': {
+        await ensureOffscreen()
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- chrome.runtime returns any
+        const embedResp = await chrome.runtime.sendMessage({
+          target: 'offscreen', type: 'EMBED_REQUEST', texts: msg.texts,
+        })
+        sendResponse(embedResp)
+        break
+      }
+
+      case 'SEARCH_REQUEST': {
+        const query = msg.query as string
+        const limit = typeof msg.limit === 'number' ? msg.limit : 10
+        const manifests = await capsuleRepo.listRecent(500)
+        let queryEmbedding: number[] | null = null
+        try {
+          await ensureOffscreen()
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- chrome.runtime returns any
+          const r = await chrome.runtime.sendMessage({
+            target: 'offscreen', type: 'EMBED_REQUEST', texts: [query],
+          })
+          queryEmbedding = (r as { embeddings?: number[][] }).embeddings?.[0] ?? null
+        } catch { /* BM25-only fallback */ }
+        const embeddingMap = new Map<string, number[]>()
+        for (const m of manifests) {
+          const body = await bodyRepo.get(m.id)
+          const emb = body?.chunks[0]?.embedding
+          if (emb) embeddingMap.set(m.id, emb)
+        }
+        const capsuleIds = hybridSearch(query, queryEmbedding, manifests, embeddingMap, limit)
+        sendResponse({ type: 'SEARCH_RESPONSE', capsuleIds })
+        break
+      }
+
       case 'LIST_CAPSULES_REQUEST': {
         const limit = typeof msg.limit === 'number' ? msg.limit : 20
         const manifests = await capsuleRepo.listRecent(limit)
@@ -204,6 +241,47 @@ async function handleCapture(tabId: number, sendResponse: (r: unknown) => void) 
   await bodyRepo.save(body)
 
   sendResponse({ type: 'CAPTURE_RESPONSE', capsuleId: manifest.id })
+  // Embed in the background; does not block the response.
+  void embedCapsuleInBackground(manifest.id)
+}
+
+async function ensureOffscreen(): Promise<void> {
+  try {
+    await chrome.offscreen.createDocument({
+      url: chrome.runtime.getURL('src/offscreen/index.html'),
+      reasons: ['WORKERS' as chrome.offscreen.Reason],
+      justification: 'transformers.js embedding inference for capsule search',
+    })
+  } catch {
+    // Offscreen document already exists — reuse it.
+  }
+}
+
+async function embedCapsuleInBackground(capsuleId: string): Promise<void> {
+  try {
+    const manifest = await capsuleRepo.get(capsuleId)
+    if (!manifest) return
+    await ensureOffscreen()
+    const text = capsuleText(manifest)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- chrome.runtime returns any
+    const r = await chrome.runtime.sendMessage({
+      target: 'offscreen', type: 'EMBED_REQUEST', texts: [text],
+    })
+    const embedding = (r as { embeddings?: number[][] }).embeddings?.[0]
+    if (!embedding) return
+    const existingBody = await bodyRepo.get(capsuleId)
+    await bodyRepo.save({
+      capsuleId,
+      full: existingBody?.full,
+      chunks: [{
+        id: `${capsuleId}-embed`,
+        text,
+        embedding,
+        startChar: 0,
+        endChar: text.length,
+      }],
+    })
+  } catch { /* embedding is best-effort; silently ignore failures */ }
 }
 
 async function collectGraph(capsuleId: string): Promise<CapsuleManifest[]> {

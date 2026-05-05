@@ -1,8 +1,10 @@
-import { PerplexityAdapter } from '@contextforge/adapter-perplexity'
+import { PerplexityAdapter, SELECTORS } from '@contextforge/adapter-perplexity'
 import { setupDropZone } from '@contextforge/adapter-claude'
 import type { CapsuleManifest, InjectionResolution } from '@contextforge/shared'
+import { setupSuggest } from './suggest'
 
 const adapter = new PerplexityAdapter()
+setupSuggest(SELECTORS.composer)
 
 setupDropZone((capsuleId, windowWidth) => {
   void chrome.runtime.sendMessage({ type: 'INJECT_REQUEST', capsuleId, windowWidth })
