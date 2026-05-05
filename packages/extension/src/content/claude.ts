@@ -3,7 +3,7 @@ import type { CapsuleManifest, InjectionResolution } from '@contextforge/shared'
 
 const adapter = new ClaudeAdapter()
 
-// Wire drop zone: on drop, ask the SW to fetch + inject the capsule.
+// Drop zone listeners persist for the lifetime of the page — no teardown needed.
 setupDropZone((capsuleId, windowWidth) => {
   void chrome.runtime.sendMessage({ type: 'INJECT_REQUEST', capsuleId, windowWidth })
 })

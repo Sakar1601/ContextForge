@@ -44,7 +44,7 @@ export function CaptureButton({ health, tabId, onCaptured }: Props) {
     <div>
       <button
         onClick={handleCapture}
-        disabled={!isHealthy || capturing || tabId === null}
+        disabled={!isHealthy || capturing}
         title={disabledReason ?? undefined}
         style={{
           width: '100%',

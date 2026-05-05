@@ -61,7 +61,6 @@ async function handleMessage(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- chrome.tabs.sendMessage returns any
         const response = await chrome.tabs.sendMessage(tabId, {
           type: 'ADAPTER_HEALTH_REQUEST',
-          tabId,
         })
         sendResponse(response)
         break
@@ -132,17 +131,18 @@ async function handleCapture(tabId: number, sendResponse: (r: unknown) => void) 
   const turns = extracted.turns as ConversationTurn[]
   const result = await compress(turns, apiKey, 'claude')
 
-  const now = new Date().toISOString()
+  const now = new Date()
+  const nowIso = now.toISOString()
   const baseFields = result.compressed
     ? {
         ...result.fields,
-        createdAt: now,
-        updatedAt: now,
+        createdAt: nowIso,
+        updatedAt: nowIso,
         parentIds: [],
         compressed: true as const,
       }
     : {
-        title: `Captured ${new Date().toLocaleString()}`,
+        title: `Captured ${now.toLocaleString()}`,
         summary: '',
         goals: [],
         constraints: [],
@@ -152,8 +152,8 @@ async function handleCapture(tabId: number, sendResponse: (r: unknown) => void) 
         turnCount: turns.length,
         tokenEstimate: turns.reduce((n, t) => n + Math.ceil(t.content.length / 4), 0),
         tags: [],
-        createdAt: now,
-        updatedAt: now,
+        createdAt: nowIso,
+        updatedAt: nowIso,
         parentIds: [],
         compressed: false as const,
       }

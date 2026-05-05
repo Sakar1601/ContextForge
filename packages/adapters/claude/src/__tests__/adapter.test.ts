@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest'
 import { ClaudeAdapter } from '../adapter'
 import { SELECTORS } from '../selectors'
-import { setupDropZone } from '../drop-zone'
+import { setupDropZone, DROP_MIME } from '../drop-zone'
 
 // jsdom environment is set in vitest.config.ts
 
@@ -190,13 +190,12 @@ describe('ClaudeAdapter', () => {
     function makeDrop(capsuleId: string | null) {
       // jsdom does not expose DragEvent; use Event + manual dataTransfer
       const ev = new Event('drop', { bubbles: true, cancelable: true })
-      const types = capsuleId ? ['application/x-contextforge-capsule'] : ['text/plain']
+      const types = capsuleId ? [DROP_MIME] : ['text/plain']
       Object.defineProperty(ev, 'dataTransfer', {
         value: {
           types,
           dropEffect: 'none',
-          getData: (mime: string) =>
-            mime === 'application/x-contextforge-capsule' && capsuleId ? capsuleId : '',
+          getData: (mime: string) => (mime === DROP_MIME && capsuleId ? capsuleId : ''),
         },
       })
       return ev

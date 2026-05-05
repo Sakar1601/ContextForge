@@ -1,3 +1,3 @@
 export { ClaudeAdapter } from './adapter'
 export { SELECTORS } from './selectors'
-export { setupDropZone } from './drop-zone'
+export { setupDropZone, DROP_MIME } from './drop-zone'

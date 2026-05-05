@@ -1,5 +1,6 @@
 import React from 'react'
 import type { CapsuleManifest } from '@contextforge/shared'
+import { DROP_MIME } from '@contextforge/adapter-claude'
 
 const PLATFORM_LABELS: Record<string, string> = {
   claude: 'Claude',
@@ -9,8 +10,6 @@ const PLATFORM_LABELS: Record<string, string> = {
   deepseek: 'DeepSeek',
   gmail: 'Gmail',
 }
-
-const DRAG_MIME = 'application/x-contextforge-capsule'
 
 function timeAgo(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime()
@@ -31,7 +30,7 @@ export function CapsuleCard({ manifest }: Props) {
     <div
       draggable
       onDragStart={(e) => {
-        e.dataTransfer.setData(DRAG_MIME, manifest.id)
+        e.dataTransfer.setData(DROP_MIME, manifest.id)
         e.dataTransfer.effectAllowed = 'copy'
       }}
       style={{

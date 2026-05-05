@@ -18,7 +18,6 @@ export default function App() {
 
   return (
     <div style={{ width: '380px', fontFamily: 'system-ui, sans-serif' }}>
-      {/* header */}
       <div
         style={{
           padding: '12px 16px',
@@ -42,12 +41,10 @@ export default function App() {
         </span>
       </div>
 
-      {/* capture */}
       <div style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb' }}>
         <CaptureButton health={health} tabId={tabId} onCaptured={refresh} />
       </div>
 
-      {/* capsule list */}
       <div style={{ maxHeight: '360px', overflowY: 'auto' }}>
         <CapsuleList capsules={capsules} loading={loading} />
       </div>
