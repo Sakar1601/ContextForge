@@ -134,6 +134,22 @@ describe('CapsuleManifestSchema', () => {
     const parsed = CapsuleManifestSchema.parse(validManifest())
     expect(CapsuleManifestSchema.parse(JSON.parse(JSON.stringify(parsed)))).toEqual(parsed)
   })
+
+  it('accepts a valid liftScore', () => {
+    expect(CapsuleManifestSchema.parse({ ...validManifest(), liftScore: 0.8 })).toBeTruthy()
+    expect(CapsuleManifestSchema.parse({ ...validManifest(), liftScore: -1 })).toBeTruthy()
+    expect(CapsuleManifestSchema.parse({ ...validManifest(), liftScore: 0 })).toBeTruthy()
+  })
+
+  it('rejects a liftScore outside [-1, 1]', () => {
+    expect(() => CapsuleManifestSchema.parse({ ...validManifest(), liftScore: 1.1 })).toThrow()
+    expect(() => CapsuleManifestSchema.parse({ ...validManifest(), liftScore: -2 })).toThrow()
+  })
+
+  it('accepts a manifest without liftScore (optional)', () => {
+    const m = validManifest()
+    expect(CapsuleManifestSchema.parse(m).liftScore).toBeUndefined()
+  })
 })
 
 // ─── CapsuleBody ─────────────────────────────────────────────────────────────
@@ -317,6 +333,9 @@ describe('ExtensionMessageSchema', () => {
     ['BRANCH_CREATE_RESPONSE', { type: 'BRANCH_CREATE_RESPONSE', branch: { name: 'feature', tipId: 'abc' } }],
     ['BRANCH_LIST_REQUEST', { type: 'BRANCH_LIST_REQUEST' }],
     ['BRANCH_LIST_RESPONSE', { type: 'BRANCH_LIST_RESPONSE', branches: [{ name: 'main', tipId: 'abc' }] }],
+    // Phase 8 messages
+    ['UPDATE_LIFT_SCORE_REQUEST', { type: 'UPDATE_LIFT_SCORE_REQUEST', capsuleId: 'abc', liftScore: 0.5 }],
+    ['UPDATE_LIFT_SCORE_RESPONSE', { type: 'UPDATE_LIFT_SCORE_RESPONSE', success: true }],
     [
       'EXTRACT_TURNS_RESPONSE (healthy)',
       {

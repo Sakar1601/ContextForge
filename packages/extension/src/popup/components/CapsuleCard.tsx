@@ -1,6 +1,7 @@
 import React from 'react'
 import type { CapsuleManifest } from '@contextforge/shared'
 import { DROP_MIME } from '@contextforge/adapter-claude'
+import { LiftBadge } from './LiftBadge'
 
 const PLATFORM_LABELS: Record<string, string> = {
   claude: 'Claude',
@@ -70,7 +71,8 @@ export function CapsuleCard({ manifest }: Props) {
             raw
           </span>
         )}
-        <span style={{ fontSize: '11px', color: '#9ca3af', marginLeft: 'auto' }}>
+        <LiftBadge capsuleId={manifest.id} initialScore={manifest.liftScore} />
+        <span style={{ fontSize: '11px', color: '#9ca3af' }}>
           {timeAgo(manifest.updatedAt)}
         </span>
         <button

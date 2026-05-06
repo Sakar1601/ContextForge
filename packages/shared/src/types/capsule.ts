@@ -26,6 +26,7 @@ export const CapsuleManifestSchema = z.object({
   tags: z.array(z.string()),
   parentIds: z.array(z.string()),
   compressed: z.boolean(),
+  liftScore: z.number().min(-1).max(1).optional(),
 })
 export type CapsuleManifest = z.infer<typeof CapsuleManifestSchema>
 

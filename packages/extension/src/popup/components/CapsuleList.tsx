@@ -9,7 +9,11 @@ interface Props {
 
 export function CapsuleList({ capsules, loading }: Props) {
   if (loading) {
-    return <div style={{ padding: '16px', fontSize: '13px', color: '#9ca3af' }}>Loading…</div>
+    return (
+      <div role="status" aria-live="polite" style={{ padding: '16px', fontSize: '13px', color: '#9ca3af' }}>
+        Loading…
+      </div>
+    )
   }
 
   if (capsules.length === 0) {

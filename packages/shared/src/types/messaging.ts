@@ -70,5 +70,12 @@ export const ExtensionMessageSchema = z.discriminatedUnion('type', [
     type: z.literal('BRANCH_LIST_RESPONSE'),
     branches: z.array(z.object({ name: z.string(), tipId: z.string() })),
   }),
+  // Phase 8: A/B lift score
+  z.object({
+    type: z.literal('UPDATE_LIFT_SCORE_REQUEST'),
+    capsuleId: z.string(),
+    liftScore: z.number().min(-1).max(1),
+  }),
+  z.object({ type: z.literal('UPDATE_LIFT_SCORE_RESPONSE'), success: z.boolean() }),
 ])
 export type ExtensionMessage = z.infer<typeof ExtensionMessageSchema>

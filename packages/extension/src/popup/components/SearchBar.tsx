@@ -3,9 +3,10 @@ import React, { useState } from 'react'
 interface Props {
   onSearch: (query: string) => void
   onClear: () => void
+  inputRef?: React.RefObject<HTMLInputElement>
 }
 
-export function SearchBar({ onSearch, onClear }: Props) {
+export function SearchBar({ onSearch, onClear, inputRef }: Props) {
   const [value, setValue] = useState('')
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -22,11 +23,13 @@ export function SearchBar({ onSearch, onClear }: Props) {
   return (
     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
       <input
+        ref={inputRef}
         type="search"
-        placeholder="Search capsules…"
+        placeholder="Search capsules… (press / to focus)"
         value={value}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
+        aria-label="Search captured capsules"
         style={{
           width: '100%',
           padding: '6px 28px 6px 8px',

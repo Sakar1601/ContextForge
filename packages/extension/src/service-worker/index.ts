@@ -137,6 +137,16 @@ async function handleMessage(
         break
       }
 
+      case 'UPDATE_LIFT_SCORE_REQUEST': {
+        const capsuleId = msg.capsuleId as string
+        const liftScore = msg.liftScore as number
+        const manifest = await capsuleRepo.get(capsuleId)
+        if (!manifest) { sendResponse({ type: 'UPDATE_LIFT_SCORE_RESPONSE', success: false }); break }
+        await capsuleRepo.save({ ...manifest, liftScore })
+        sendResponse({ type: 'UPDATE_LIFT_SCORE_RESPONSE', success: true })
+        break
+      }
+
       default:
         sendResponse({ error: `Unknown message type: ${msg.type}` })
     }
