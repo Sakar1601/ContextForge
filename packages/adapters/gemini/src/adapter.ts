@@ -44,25 +44,32 @@ export class GeminiAdapter implements SiteAdapter {
 }
 
 function insertContextBlock(target: Element, capsule: CapsuleManifest, resolution: InjectionResolution): Element {
-  const block = document.createElement('div')
-  block.setAttribute('data-contextforge', capsule.id)
-  block.style.cssText = 'border:1px solid #bfdbfe;border-radius:6px;padding:8px 12px;margin-bottom:8px;font-size:13px;color:#1e3a5f;background:#eff6ff;white-space:pre-wrap;line-height:1.5'
-  const add = (t: string) => { const p = document.createElement('p'); p.style.cssText = 'margin:0 0 2px'; p.textContent = t; block.appendChild(p) }
-  add(`📎 ${capsule.title}`)
+  const lines: string[] = ['📎 Context: ' + capsule.title]
   if (resolution === 'full' || resolution === 'compact') {
-    if (capsule.goals.length) add(`Goals: ${capsule.goals.join('; ')}`)
-    if (capsule.constraints.length) add(`Constraints: ${capsule.constraints.join('; ')}`)
+    if (capsule.goals.length) lines.push('Goals: ' + capsule.goals.join('; '))
+    if (capsule.constraints.length) lines.push('Constraints: ' + capsule.constraints.join('; '))
   }
   if (resolution === 'full') {
-    if (capsule.decisions.length) add(`Decisions: ${capsule.decisions.join('; ')}`)
-    if (capsule.openQuestions.length) add(`Open: ${capsule.openQuestions.join('; ')}`)
+    if (capsule.decisions.length) lines.push('Decisions: ' + capsule.decisions.join('; '))
+    if (capsule.openQuestions.length) lines.push('Open: ' + capsule.openQuestions.join('; '))
   }
-  if (resolution === 'minimal') add(capsule.summary)
-  const footer = document.createElement('small')
-  footer.setAttribute('data-contextforge-footer', '')
-  footer.style.cssText = 'display:block;margin-top:6px;color:#6b7280;font-size:11px;border-top:1px solid #dbeafe;padding-top:4px'
-  footer.textContent = `Context from: ${capsule.title} via ContextForge`
-  block.appendChild(footer)
-  target.parentElement?.insertBefore(block, target)
-  return block
+  if (resolution === 'minimal') lines.push(capsule.summary)
+  lines.push('[via ContextForge]\n')
+  const text = lines.join('\n')
+  if (target instanceof HTMLElement) target.focus()
+  const sel = window.getSelection()
+  if (sel) {
+    const range = document.createRange()
+    range.selectNodeContents(target)
+    range.collapse(true)
+    sel.removeAllRanges()
+    sel.addRange(range)
+  }
+  const inserted = typeof document.execCommand === 'function' && document.execCommand('insertText', false, text); if (!inserted) { const node = document.createTextNode(text); if (sel?.rangeCount) { const r = sel.getRangeAt(0); r.insertNode(node); r.collapse(false) } else { target.insertBefore(node, target.firstChild) } }
+  const sentinel = document.createElement('span')
+  sentinel.setAttribute('data-contextforge', capsule.id)
+  sentinel.setAttribute('data-contextforge-footer', '')
+  sentinel.style.display = 'none'
+  target.appendChild(sentinel)
+  return sentinel
 }

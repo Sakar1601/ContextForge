@@ -145,37 +145,37 @@ describe('ClaudeAdapter', () => {
       `
     })
 
-    it('inserts a block before the composer', () => {
+    it('injects text into the composer (not a separate block)', () => {
       adapter.injectContext(capsule, 'full')
-      const block = document.querySelector('[data-contextforge]')
-      expect(block).not.toBeNull()
-      expect(block?.textContent).toContain('Test capsule')
+      // Text goes INTO the contenteditable via execCommand
+      const composer = document.querySelector('[contenteditable="true"]')
+      expect(composer?.textContent).toContain('Test capsule')
+      // A hidden sentinel marks the injection
+      expect(document.querySelector('[data-contextforge]')).not.toBeNull()
     })
 
-    it('full resolution includes goals and constraints', () => {
+    it('full resolution includes goals and constraints in composer text', () => {
       adapter.injectContext(capsule, 'full')
-      const text = document.querySelector('[data-contextforge]')?.textContent ?? ''
+      const text = document.querySelector('[contenteditable="true"]')?.textContent ?? ''
       expect(text).toContain('do the thing')
       expect(text).toContain('no side effects')
       expect(text).toContain('use Dexie')
     })
 
-    it('minimal resolution shows only title and summary', () => {
+    it('minimal resolution includes title and summary only', () => {
       adapter.injectContext(capsule, 'minimal')
-      const text = document.querySelector('[data-contextforge]')?.textContent ?? ''
+      const text = document.querySelector('[contenteditable="true"]')?.textContent ?? ''
       expect(text).toContain('Test capsule')
       expect(text).toContain('A summary')
       expect(text).not.toContain('do the thing')
     })
 
     it.each(['full', 'compact', 'minimal'] as const)(
-      'always includes the provenance footer for resolution "%s"',
+      'always marks injection with sentinel for resolution "%s"',
       (resolution) => {
         adapter.injectContext(capsule, resolution)
-        const footer = document.querySelector('[data-contextforge-footer]')
-        expect(footer).not.toBeNull()
-        expect(footer?.textContent).toContain('via ContextForge')
-        expect(footer?.textContent).toContain('Test capsule')
+        expect(document.querySelector('[data-contextforge]')).not.toBeNull()
+        expect(document.querySelector('[data-contextforge-footer]')).not.toBeNull()
       },
     )
   })

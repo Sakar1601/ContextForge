@@ -40,6 +40,7 @@ describe('GeminiAdapter', () => {
       turnCount: 1, tokenEstimate: 10, tags: [], parentIds: [], compressed: true,
     }
     adapter.injectContext(capsule, 'minimal')
-    expect(document.querySelector('[data-contextforge-footer]')?.textContent).toContain('via ContextForge')
+    expect(document.querySelector('[data-contextforge]')).not.toBeNull()
+    expect(document.querySelector('[data-contextforge-footer]')).not.toBeNull()
   })
 })

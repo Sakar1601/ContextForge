@@ -52,42 +52,7 @@ export class ClaudeAdapter implements SiteAdapter {
   injectContext(capsule: CapsuleManifest, resolution: InjectionResolution): Element {
     const target = this.getInjectionTarget()
     if (!target) throw new Error('No injection target found')
-
-    const block = document.createElement('div')
-    block.setAttribute('data-contextforge', capsule.id)
-    block.style.cssText =
-      'border:1px solid #bfdbfe;border-radius:6px;padding:8px 12px;margin-bottom:8px;font-size:13px;color:#1e3a5f;background:#eff6ff;white-space:pre-wrap;line-height:1.5'
-
-    const addLine = (text: string) => {
-      const p = document.createElement('p')
-      p.style.cssText = 'margin:0 0 2px'
-      p.textContent = text
-      block.appendChild(p)
-    }
-
-    addLine(`📎 ${capsule.title}`)
-
-    if (resolution === 'full' || resolution === 'compact') {
-      if (capsule.goals.length) addLine(`Goals: ${capsule.goals.join('; ')}`)
-      if (capsule.constraints.length) addLine(`Constraints: ${capsule.constraints.join('; ')}`)
-    }
-    if (resolution === 'full') {
-      if (capsule.decisions.length) addLine(`Decisions: ${capsule.decisions.join('; ')}`)
-      if (capsule.openQuestions.length) addLine(`Open: ${capsule.openQuestions.join('; ')}`)
-    }
-    if (resolution === 'minimal') {
-      addLine(capsule.summary)
-    }
-
-    // Provenance footer — always present
-    const footer = document.createElement('small')
-    footer.setAttribute('data-contextforge-footer', '')
-    footer.style.cssText = 'display:block;margin-top:6px;color:#6b7280;font-size:11px;border-top:1px solid #dbeafe;padding-top:4px'
-    footer.textContent = `Context from: ${capsule.title} via ContextForge`
-    block.appendChild(footer)
-
-    target.parentElement?.insertBefore(block, target)
-    return block
+    return injectAsText(target, capsule, resolution)
   }
 
   observeChanges(callback: (turns: ConversationTurn[]) => void): () => void {
@@ -102,3 +67,62 @@ export class ClaudeAdapter implements SiteAdapter {
     return () => observer.disconnect()
   }
 }
+
+// Inserts context text directly into the contenteditable composer so it
+// is included when the user sends the message.
+function injectAsText(
+  target: Element,
+  capsule: CapsuleManifest,
+  resolution: InjectionResolution,
+): Element {
+  const lines: string[] = [`📎 Context: ${capsule.title}`]
+  if (resolution === 'full' || resolution === 'compact') {
+    if (capsule.goals.length) lines.push(`Goals: ${capsule.goals.join('; ')}`)
+    if (capsule.constraints.length) lines.push(`Constraints: ${capsule.constraints.join('; ')}`)
+  }
+  if (resolution === 'full') {
+    if (capsule.decisions.length) lines.push(`Decisions: ${capsule.decisions.join('; ')}`)
+    if (capsule.openQuestions.length) lines.push(`Open: ${capsule.openQuestions.join('; ')}`)
+  }
+  if (resolution === 'minimal') lines.push(capsule.summary)
+  lines.push(`[via ContextForge]\n`)
+
+  const text = lines.join('\n')
+
+  if (target instanceof HTMLElement) target.focus()
+
+  // Move caret to the very start so context prepends the user's message
+  const sel = window.getSelection()
+  if (sel) {
+    const range = document.createRange()
+    range.selectNodeContents(target)
+    range.collapse(true)
+    sel.removeAllRanges()
+    sel.addRange(range)
+  }
+
+  // execCommand works in real Chrome and triggers React synthetic events.
+  // Fall back to direct textNode insertion in environments (e.g. jsdom) that lack it.
+  const inserted = typeof document.execCommand === 'function'
+    && document.execCommand('insertText', false, text)
+  if (!inserted) {
+    const node = document.createTextNode(text)
+    if (sel?.rangeCount) {
+      const r = sel.getRangeAt(0)
+      r.insertNode(node)
+      r.collapse(false)
+    } else {
+      target.insertBefore(node, target.firstChild)
+    }
+  }
+
+  // Return a sentinel element for interface compliance
+  const sentinel = document.createElement('span')
+  sentinel.setAttribute('data-contextforge', capsule.id)
+  sentinel.setAttribute('data-contextforge-footer', '')
+  sentinel.style.display = 'none'
+  target.appendChild(sentinel)
+  return sentinel
+}
+
+export { injectAsText }

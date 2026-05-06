@@ -40,6 +40,7 @@ describe('DeepSeekAdapter', () => {
       turnCount: 1, tokenEstimate: 10, tags: [], parentIds: [], compressed: true,
     }
     adapter.injectContext(capsule, 'full')
+    expect(document.querySelector('[data-contextforge]')).not.toBeNull()
     expect(document.querySelector('[data-contextforge-footer]')).not.toBeNull()
   })
 })
