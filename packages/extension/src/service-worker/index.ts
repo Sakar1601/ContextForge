@@ -4,7 +4,7 @@
 // holds no mutable JS state, so this is compliant with MV3 discipline.
 
 import { commit, selectResolution } from '@contextforge/shared'
-import type { CapsuleManifest, ConversationTurn } from '@contextforge/shared'
+import type { CapsuleManifest, ConversationTurn, Platform } from '@contextforge/shared'
 import { compress } from '@contextforge/compression'
 import { hybridSearch, capsuleText } from '@contextforge/retrieval'
 import { ContextForgeDB } from '../storage/db'
@@ -206,7 +206,21 @@ async function handleInject(
   sendResponse({ type: 'INJECT_RESPONSE', success: true, ...(result as object) })
 }
 
+function platformFromUrl(url: string): Platform {
+  if (url.includes('claude.ai'))           return 'claude'
+  if (url.includes('chatgpt.com'))         return 'chatgpt'
+  if (url.includes('gemini.google.com'))   return 'gemini'
+  if (url.includes('perplexity.ai'))       return 'perplexity'
+  if (url.includes('deepseek.com'))        return 'deepseek'
+  if (url.includes('mail.google.com'))     return 'gmail'
+  return 'claude'
+}
+
 async function handleCapture(tabId: number, sendResponse: (r: unknown) => void) {
+  // Detect platform from the tab URL so the capsule is tagged correctly.
+  const tab = await chrome.tabs.get(tabId)
+  const platform = platformFromUrl(tab.url ?? '')
+
   const extracted = (await chrome.tabs.sendMessage(tabId, {
     type: 'EXTRACT_TURNS_REQUEST',
   })) as { type: string; turns: unknown[]; health: { status: string; reason?: string } }
@@ -223,7 +237,7 @@ async function handleCapture(tabId: number, sendResponse: (r: unknown) => void) 
   const storage = await chrome.storage.local.get('anthropicApiKey')
   const apiKey = (storage['anthropicApiKey'] as string | undefined) ?? ''
   const turns = extracted.turns as ConversationTurn[]
-  const result = await compress(turns, apiKey, 'claude')
+  const result = await compress(turns, apiKey, platform)
 
   const now = new Date()
   const nowIso = now.toISOString()
@@ -242,7 +256,7 @@ async function handleCapture(tabId: number, sendResponse: (r: unknown) => void) 
         constraints: [],
         decisions: [],
         openQuestions: [],
-        platform: 'claude' as const,
+        platform,
         turnCount: turns.length,
         tokenEstimate: turns.reduce((n, t) => n + Math.ceil(t.content.length / 4), 0),
         tags: [],
