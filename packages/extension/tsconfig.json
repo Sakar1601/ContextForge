@@ -13,7 +13,8 @@
     { "path": "../adapters/perplexity" },
     { "path": "../adapters/deepseek" },
     { "path": "../adapters/gmail" },
-    { "path": "../compression" }
+    { "path": "../compression" },
+    { "path": "../retrieval" }
   ],
   "include": ["src"]
 }

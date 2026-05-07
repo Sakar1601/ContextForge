@@ -93,8 +93,11 @@ export async function compress(
       }
     } catch {
       if (attempt === 1) return { compressed: false, rawTurns: turns }
+      // attempt 0 failed — loop continues to attempt 1
     }
   }
 
+  // Unreachable in practice (loop always returns on attempt 1),
+  // but required by TypeScript's control-flow analysis.
   return { compressed: false, rawTurns: turns }
 }
