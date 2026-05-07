@@ -9,6 +9,10 @@ import { pipeline, env } from '@xenova/transformers'
 env.useBrowserCache = true
 env.allowLocalModels = false
 
+// Disable ONNX multi-threading — MV3 extensions block blob: URL workers.
+// Single-threaded WASM still works; performance is adequate for short texts.
+env.backends.onnx.wasm.numThreads = 1
+
 type FeatureExtractionPipeline = Awaited<ReturnType<typeof pipeline<'feature-extraction'>>>
 let extractor: FeatureExtractionPipeline | null = null
 
