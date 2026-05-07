@@ -172,12 +172,25 @@ async function handleInject(
     return
   }
 
+  // For raw (uncompressed) capsules, surface the actual conversation text as the summary
+  // so the injection has real content to show rather than empty extracted fields.
+  let effectiveManifest = manifest
+  if (!manifest.compressed) {
+    const body = await bodyRepo.get(capsuleId)
+    if (body?.full) {
+      const preview = body.full.length > 800
+        ? `${body.full.slice(0, 800)}…`
+        : body.full
+      effectiveManifest = { ...manifest, summary: preview }
+    }
+  }
+
   const resolution = selectResolution(windowWidth)
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- chrome.tabs.sendMessage returns any
   const result = await chrome.tabs.sendMessage(tabId, {
     type: 'INJECT_COMMAND',
-    manifest,
+    manifest: effectiveManifest,
     resolution,
   })
 

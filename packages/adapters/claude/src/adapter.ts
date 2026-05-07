@@ -75,15 +75,21 @@ function injectAsText(
   capsule: CapsuleManifest,
   resolution: InjectionResolution,
 ): Element {
+  const hasStructuredContent = capsule.goals.length > 0 || capsule.constraints.length > 0
+    || capsule.decisions.length > 0 || capsule.openQuestions.length > 0
+
   const lines: string[] = [`📎 Context: ${capsule.title}`]
-  if (resolution === 'full' || resolution === 'compact') {
+  if (hasStructuredContent && (resolution === 'full' || resolution === 'compact')) {
     if (capsule.goals.length) lines.push(`Goals: ${capsule.goals.join('; ')}`)
     if (capsule.constraints.length) lines.push(`Constraints: ${capsule.constraints.join('; ')}`)
   }
-  if (resolution === 'full') {
+  if (hasStructuredContent && resolution === 'full') {
     if (capsule.decisions.length) lines.push(`Decisions: ${capsule.decisions.join('; ')}`)
     if (capsule.openQuestions.length) lines.push(`Open: ${capsule.openQuestions.join('; ')}`)
   }
+  // For raw/uncompressed capsules (no structured fields), always show the summary
+  // which the SW populates with the raw conversation text.
+  if (!hasStructuredContent && capsule.summary) lines.push(capsule.summary)
   if (resolution === 'minimal') lines.push(capsule.summary)
   lines.push(`[via ContextForge]\n`)
 
