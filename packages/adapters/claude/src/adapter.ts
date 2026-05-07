@@ -107,7 +107,7 @@ function injectAsText(
     sel.addRange(range)
   }
 
-  // execCommand works in real Chrome and triggers React synthetic events.
+  // execCommand inserts text and fires a native input event.
   // Fall back to direct textNode insertion in environments (e.g. jsdom) that lack it.
   const inserted = typeof document.execCommand === 'function'
     && document.execCommand('insertText', false, text)
@@ -120,6 +120,8 @@ function injectAsText(
     } else {
       target.insertBefore(node, target.firstChild)
     }
+    // Notify React-controlled inputs (ChatGPT, Gemini, etc.) that the value changed.
+    target.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: true }))
   }
 
   // Return a sentinel element for interface compliance

@@ -76,7 +76,19 @@ function insertContextBlock(target: Element, capsule: CapsuleManifest, resolutio
     sel.removeAllRanges()
     sel.addRange(range)
   }
-  const inserted = typeof document.execCommand === 'function' && document.execCommand('insertText', false, text); if (!inserted) { const node = document.createTextNode(text); if (sel?.rangeCount) { const r = sel.getRangeAt(0); r.insertNode(node); r.collapse(false) } else { target.insertBefore(node, target.firstChild) } }
+  const inserted = typeof document.execCommand === 'function'
+    && document.execCommand('insertText', false, text)
+  if (!inserted) {
+    const node = document.createTextNode(text)
+    if (sel?.rangeCount) {
+      const r = sel.getRangeAt(0)
+      r.insertNode(node)
+      r.collapse(false)
+    } else {
+      target.insertBefore(node, target.firstChild)
+    }
+    target.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: true }))
+  }
   const sentinel = document.createElement('span')
   sentinel.setAttribute('data-contextforge', capsule.id)
   sentinel.setAttribute('data-contextforge-footer', '')

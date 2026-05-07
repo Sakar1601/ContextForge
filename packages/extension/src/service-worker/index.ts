@@ -178,9 +178,13 @@ async function handleInject(
   if (!manifest.compressed) {
     const body = await bodyRepo.get(capsuleId)
     if (body?.full) {
-      const preview = body.full.length > 800
-        ? `${body.full.slice(0, 800)}…`
-        : body.full
+      // 4000 chars covers ~6-8 typical exchanges; trim at a line boundary if possible
+      const MAX = 4000
+      let preview = body.full
+      if (preview.length > MAX) {
+        const cut = preview.lastIndexOf('\n', MAX)
+        preview = preview.slice(0, cut > 0 ? cut : MAX) + '\n…'
+      }
       effectiveManifest = { ...manifest, summary: preview }
     }
   }
