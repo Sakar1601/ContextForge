@@ -5,3 +5,5 @@ coverage/
 .DS_Store
 *.local
 .env
+test-results/
+contextforge-*.zip
