@@ -13,7 +13,9 @@ const nodeTypes = { capsule: CapsuleNode }
 
 export default function GraphApp() {
   const params = new URLSearchParams(location.search)
-  const rootId = params.get('id') ?? ''
+  // Validate that the id is a 64-char hex string (SHA-256 capsule id) before using it.
+  const rawId = params.get('id') ?? ''
+  const rootId = /^[0-9a-f]{64}$/.test(rawId) ? rawId : ''
 
   const [manifests, setManifests] = useState<CapsuleManifest[]>([])
   const [activeCapsuleId, setActiveCapsuleId] = useState<string | null>(null)

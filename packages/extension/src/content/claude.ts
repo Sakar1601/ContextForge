@@ -9,6 +9,8 @@ setupDropZone((capsuleId, windowWidth) => {
 })
 setupSuggest(SELECTORS.composer)
 
+// Note: web pages cannot forge chrome.runtime.onMessage — the browser blocks
+// cross-origin message sends. _sender is intentionally unused here.
 chrome.runtime.onMessage.addListener(
   (msg: { type: string; manifest?: CapsuleManifest; resolution?: InjectionResolution }, _sender, sendResponse) => {
     if (msg.type === 'INJECT_COMMAND') {

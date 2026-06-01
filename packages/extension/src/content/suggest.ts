@@ -67,9 +67,10 @@ export function setupSuggest(composerSelector: string): () => void {
     document.body.appendChild(panel)
   }
 
-  function handleFocus() {
+  function handleFocus(e: FocusEvent) {
     const composer = document.querySelector(composerSelector)
-    if (!composer) return
+    // Only trigger when the composer itself (or a child of it) receives focus.
+    if (!composer || !composer.contains(e.target as Node)) return
     const text = composer.textContent?.trim() ?? ''
     if (!text) return
 
@@ -102,12 +103,12 @@ export function setupSuggest(composerSelector: string): () => void {
     if (e.key === 'Escape') removePanel()
   }
 
-  document.addEventListener('focusin', handleFocus)
+  document.addEventListener('focusin', handleFocus as EventListener)
   document.addEventListener('focusout', handleBlur)
   document.addEventListener('keydown', handleKeydown)
 
   return () => {
-    document.removeEventListener('focusin', handleFocus)
+    document.removeEventListener('focusin', handleFocus as EventListener)
     document.removeEventListener('focusout', handleBlur)
     document.removeEventListener('keydown', handleKeydown)
     removePanel()

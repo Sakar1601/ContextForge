@@ -17,6 +17,10 @@ const capsuleRepo = new CapsuleRepository(db)
 const bodyRepo = new BodyRepository(db)
 const provenanceRepo = new ProvenanceRepository(db)
 
+// Keep-alive: service workers terminate after ~30 s of inactivity.
+// The alarm listener just needs to exist — receiving any alarm event resets the timer.
+chrome.alarms.onAlarm.addListener((_alarm) => { /* keep-alive heartbeat */ })
+
 chrome.runtime.onMessage.addListener(
   (
     msg: { type: string; target?: string; [k: string]: unknown },
@@ -161,53 +165,59 @@ async function handleInject(
   tabId: number | undefined,
   sendResponse: (r: unknown) => void,
 ) {
-  if (!tabId) {
-    sendResponse({ type: 'INJECT_RESPONSE', success: false, error: 'No tab context' })
-    return
-  }
-
-  const manifest = await capsuleRepo.get(capsuleId)
-  if (!manifest) {
-    sendResponse({ type: 'INJECT_RESPONSE', success: false, error: 'Capsule not found' })
-    return
-  }
-
-  // For raw (uncompressed) capsules, surface the actual conversation text as the summary
-  // so the injection has real content to show rather than empty extracted fields.
-  let effectiveManifest = manifest
-  if (!manifest.compressed) {
-    const body = await bodyRepo.get(capsuleId)
-    if (body?.full) {
-      // 4000 chars covers ~6-8 typical exchanges; trim at a line boundary if possible
-      const MAX = 4000
-      let preview = body.full
-      if (preview.length > MAX) {
-        const cut = preview.lastIndexOf('\n', MAX)
-        preview = preview.slice(0, cut > 0 ? cut : MAX) + '\n…'
-      }
-      effectiveManifest = { ...manifest, summary: preview }
+  try {
+    if (!tabId) {
+      sendResponse({ type: 'INJECT_RESPONSE', success: false, error: 'No tab context' })
+      return
     }
+
+    const manifest = await capsuleRepo.get(capsuleId)
+    if (!manifest) {
+      sendResponse({ type: 'INJECT_RESPONSE', success: false, error: 'Capsule not found' })
+      return
+    }
+
+    // For raw (uncompressed) capsules, surface the conversation text as the summary.
+    let effectiveManifest = manifest
+    if (!manifest.compressed) {
+      const body = await bodyRepo.get(capsuleId)
+      if (body?.full) {
+        const MAX = 4000
+        let preview = body.full
+        if (preview.length > MAX) {
+          const cut = preview.lastIndexOf('\n', MAX)
+          preview = preview.slice(0, cut > 0 ? cut : MAX) + '\n…'
+        }
+        effectiveManifest = { ...manifest, summary: preview }
+      }
+    }
+
+    const resolution = selectResolution(windowWidth)
+
+    let result: unknown
+    try {
+      result = await chrome.tabs.sendMessage(tabId, {
+        type: 'INJECT_COMMAND',
+        manifest: effectiveManifest,
+        resolution,
+      })
+    } catch (err) {
+      sendResponse({ type: 'INJECT_RESPONSE', success: false, error: `Content script unreachable — reload the page and try again. (${String(err)})` })
+      return
+    }
+
+    await provenanceRepo.save({
+      id: crypto.randomUUID(),
+      turnId: `inject-${Date.now()}`,
+      capsuleIds: [capsuleId],
+      platform: manifest.platform,
+      injectedAt: new Date().toISOString(),
+    })
+
+    sendResponse({ type: 'INJECT_RESPONSE', success: true, ...(result as object) })
+  } catch (err) {
+    sendResponse({ type: 'INJECT_RESPONSE', success: false, error: String(err) })
   }
-
-  const resolution = selectResolution(windowWidth)
-
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- chrome.tabs.sendMessage returns any
-  const result = await chrome.tabs.sendMessage(tabId, {
-    type: 'INJECT_COMMAND',
-    manifest: effectiveManifest,
-    resolution,
-  })
-
-  // Save provenance record
-  await provenanceRepo.save({
-    id: crypto.randomUUID(),
-    turnId: `inject-${Date.now()}`,
-    capsuleIds: [capsuleId],
-    platform: manifest.platform,
-    injectedAt: new Date().toISOString(),
-  })
-
-  sendResponse({ type: 'INJECT_RESPONSE', success: true, ...(result as object) })
 }
 
 function platformFromUrl(url: string): Platform {
@@ -221,13 +231,20 @@ function platformFromUrl(url: string): Platform {
 }
 
 async function handleCapture(tabId: number, sendResponse: (r: unknown) => void) {
+  try {
   // Detect platform from the tab URL so the capsule is tagged correctly.
   const tab = await chrome.tabs.get(tabId)
   const platform = platformFromUrl(tab.url ?? '')
 
-  const extracted = (await chrome.tabs.sendMessage(tabId, {
-    type: 'EXTRACT_TURNS_REQUEST',
-  })) as { type: string; turns: unknown[]; health: { status: string; reason?: string } }
+  let extracted: { type: string; turns: unknown[]; health: { status: string; reason?: string } }
+  try {
+    extracted = (await chrome.tabs.sendMessage(tabId, {
+      type: 'EXTRACT_TURNS_REQUEST',
+    })) as typeof extracted
+  } catch (err) {
+    sendResponse({ type: 'CAPTURE_RESPONSE', capsuleId: '', error: `Content script not running on this page — reload the tab first. (${String(err)})` })
+    return
+  }
 
   if (extracted.health.status === 'unhealthy') {
     sendResponse({
@@ -241,7 +258,16 @@ async function handleCapture(tabId: number, sendResponse: (r: unknown) => void) 
   const storage = await chrome.storage.local.get('anthropicApiKey')
   const apiKey = (storage['anthropicApiKey'] as string | undefined) ?? ''
   const turns = extracted.turns as ConversationTurn[]
-  const result = await compress(turns, apiKey, platform)
+
+  // Keep-alive alarm for long Anthropic API calls (per ADR-0002).
+  const alarmName = `capture-${Date.now()}`
+  void chrome.alarms.create(alarmName, { delayInMinutes: 0.5 })
+  let result: Awaited<ReturnType<typeof compress>>
+  try {
+    result = await compress(turns, apiKey, platform)
+  } finally {
+    void chrome.alarms.clear(alarmName)
+  }
 
   const now = new Date()
   const nowIso = now.toISOString()
@@ -284,6 +310,9 @@ async function handleCapture(tabId: number, sendResponse: (r: unknown) => void) 
   sendResponse({ type: 'CAPTURE_RESPONSE', capsuleId: manifest.id })
   // Embed in the background; does not block the response.
   void embedCapsuleInBackground(manifest.id)
+  } catch (err) {
+    sendResponse({ type: 'CAPTURE_RESPONSE', capsuleId: '', error: String(err) })
+  }
 }
 
 async function ensureOffscreen(): Promise<void> {

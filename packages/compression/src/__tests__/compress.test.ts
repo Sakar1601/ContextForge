@@ -120,4 +120,27 @@ describe('compress', () => {
     await compress(TURNS, 'sk-test', 'claude')
     expect(mockCreate.mock.calls[0]?.[0].model).toBe('claude-haiku-4-5-20251001')
   })
+
+  it.each(['claude', 'chatgpt', 'gemini', 'perplexity', 'deepseek'] as const)(
+    'preserves platform "%s" in the extracted fields',
+    async (platform) => {
+      mockCreate.mockResolvedValueOnce(makeApiResponse(VALID_XML))
+      const { compress } = await import('../compress')
+      const result = await compress(TURNS, 'sk-test', platform)
+      expect(result.compressed).toBe(true)
+      if (result.compressed) {
+        expect(result.fields.platform).toBe(platform)
+      }
+    },
+  )
+
+  it('returns raw mode with correct rawTurns on API failure', async () => {
+    mockCreate.mockRejectedValue(new Error('timeout'))
+    const { compress } = await import('../compress')
+    const result = await compress(TURNS, 'sk-test', 'chatgpt')
+    expect(result.compressed).toBe(false)
+    if (!result.compressed) {
+      expect(result.rawTurns).toEqual(TURNS)
+    }
+  })
 })

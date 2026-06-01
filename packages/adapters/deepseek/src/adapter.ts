@@ -55,8 +55,13 @@ function insertContextBlock(target: Element, capsule: CapsuleManifest, resolutio
     if (capsule.decisions.length) lines.push(`Decisions: ${capsule.decisions.join('; ')}`)
     if (capsule.openQuestions.length) lines.push(`Open: ${capsule.openQuestions.join('; ')}`)
   }
-  if (!hasStructuredContent && capsule.summary) lines.push(capsule.summary)
-  if (resolution === 'minimal') lines.push(capsule.summary)
+  // Raw capsules: summary holds the full conversation text (set by SW).
+  // Use else-if to prevent double-appending.
+  if (!hasStructuredContent && capsule.summary) {
+    lines.push(capsule.summary)
+  } else if (resolution === 'minimal' && capsule.summary) {
+    lines.push(capsule.summary)
+  }
   lines.push(`[via ContextForge]\n`)
   const text = lines.join('\n')
   if (target instanceof HTMLElement) target.focus()
@@ -79,8 +84,9 @@ function insertContextBlock(target: Element, capsule: CapsuleManifest, resolutio
     } else {
       target.insertBefore(node, target.firstChild)
     }
-    target.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: true }))
   }
+  // Always dispatch: execCommand fires input natively but React sometimes needs an explicit push.
+  target.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: true }))
   const sentinel = document.createElement('span')
   sentinel.setAttribute('data-contextforge', capsule.id)
   sentinel.setAttribute('data-contextforge-footer', '')

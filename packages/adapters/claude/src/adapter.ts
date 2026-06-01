@@ -87,10 +87,14 @@ function injectAsText(
     if (capsule.decisions.length) lines.push(`Decisions: ${capsule.decisions.join('; ')}`)
     if (capsule.openQuestions.length) lines.push(`Open: ${capsule.openQuestions.join('; ')}`)
   }
-  // For raw/uncompressed capsules (no structured fields), always show the summary
-  // which the SW populates with the raw conversation text.
-  if (!hasStructuredContent && capsule.summary) lines.push(capsule.summary)
-  if (resolution === 'minimal') lines.push(capsule.summary)
+  // Raw capsules: summary holds the full conversation text (set by SW for uncompressed capsules).
+  // Structured capsules with minimal resolution: show the short summary.
+  // Use else-if to prevent double-appending when both conditions are true.
+  if (!hasStructuredContent && capsule.summary) {
+    lines.push(capsule.summary)
+  } else if (resolution === 'minimal' && capsule.summary) {
+    lines.push(capsule.summary)
+  }
   lines.push(`[via ContextForge]\n`)
 
   const text = lines.join('\n')
@@ -120,9 +124,10 @@ function injectAsText(
     } else {
       target.insertBefore(node, target.firstChild)
     }
-    // Notify React-controlled inputs (ChatGPT, Gemini, etc.) that the value changed.
-    target.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: true }))
   }
+  // Always dispatch InputEvent — execCommand fires it natively in Chrome but
+  // some React versions need an explicit dispatch to sync their internal state.
+  target.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: true }))
 
   // Return a sentinel element for interface compliance
   const sentinel = document.createElement('span')
@@ -132,5 +137,3 @@ function injectAsText(
   target.appendChild(sentinel)
   return sentinel
 }
-
-export { injectAsText }

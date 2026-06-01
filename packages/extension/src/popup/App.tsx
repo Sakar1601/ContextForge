@@ -62,17 +62,19 @@ export default function App() {
   const { capsules, loading, refresh } = useCapsules(20)
 
   const handleSearch = useCallback((query: string) => {
-    chrome.runtime
-      .sendMessage({ type: 'SEARCH_REQUEST', query, limit: 10 })
-      .then((r: { capsuleIds?: string[] }) => {
-        const ids = r.capsuleIds ?? []
-        const matched = ids
-          .map((id) => capsules.find((m) => m.id === id))
-          .filter(Boolean) as CapsuleManifest[]
-        setSearchResults(matched)
+    // 1. Get ranked IDs from hybrid search
+    // 2. Fetch ALL manifests (up to 500) so search works beyond the 20-capsule popup cache
+    Promise.all([
+      chrome.runtime.sendMessage({ type: 'SEARCH_REQUEST', query, limit: 10 }) as Promise<{ capsuleIds?: string[] }>,
+      chrome.runtime.sendMessage({ type: 'LIST_CAPSULES_REQUEST', limit: 500 }) as Promise<{ manifests?: CapsuleManifest[] }>,
+    ])
+      .then(([searchRes, listRes]) => {
+        const ids = searchRes.capsuleIds ?? []
+        const allMap = new Map((listRes.manifests ?? []).map((m) => [m.id, m]))
+        setSearchResults(ids.map((id) => allMap.get(id)).filter(Boolean) as CapsuleManifest[])
       })
       .catch(() => setSearchResults([]))
-  }, [capsules])
+  }, [])
 
   const handleSearchClear = useCallback(() => setSearchResults(null), [])
 

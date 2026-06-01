@@ -178,6 +178,45 @@ describe('ClaudeAdapter', () => {
         expect(document.querySelector('[data-contextforge-footer]')).not.toBeNull()
       },
     )
+
+    it('raw capsule (no structured fields): shows summary text for all resolutions', () => {
+      const rawCapsule = {
+        ...capsule,
+        compressed: false,
+        goals: [],
+        constraints: [],
+        decisions: [],
+        openQuestions: [],
+        summary: 'This is the raw conversation text from the SW',
+      }
+      for (const res of ['full', 'compact', 'minimal'] as const) {
+        document.body.innerHTML = `<div id="parent"><div contenteditable="true" enterkeyhint="enter"></div></div>`
+        adapter.injectContext(rawCapsule, res)
+        const text = document.querySelector('[contenteditable="true"]')?.textContent ?? ''
+        expect(text).toContain('This is the raw conversation text from the SW')
+        // Should NOT appear twice
+        const count = (text.match(/This is the raw conversation text/g) ?? []).length
+        expect(count).toBe(1)
+      }
+    })
+
+    it('falls back to textNode insertion when execCommand is unavailable', () => {
+      const origExec = document.execCommand
+      // Force execCommand to fail (simulates unsupported environments)
+      Object.defineProperty(document, 'execCommand', { value: () => false, configurable: true })
+      adapter.injectContext(capsule, 'full')
+      const text = document.querySelector('[contenteditable="true"]')?.textContent ?? ''
+      expect(text).toContain('Test capsule')
+      Object.defineProperty(document, 'execCommand', { value: origExec, configurable: true })
+    })
+
+    it('always dispatches an InputEvent after injection', () => {
+      const events: Event[] = []
+      const composer = document.querySelector('[contenteditable="true"]')!
+      composer.addEventListener('input', (e) => events.push(e))
+      adapter.injectContext(capsule, 'full')
+      expect(events.length).toBeGreaterThanOrEqual(1)
+    })
   })
 
   describe('setupDropZone()', () => {
