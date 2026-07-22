@@ -70,6 +70,9 @@ export const ExtensionMessageSchema = z.discriminatedUnion('type', [
     type: z.literal('BRANCH_LIST_RESPONSE'),
     branches: z.array(z.object({ name: z.string(), tipId: z.string() })),
   }),
+  // Merge / cherry-pick: persist a manifest already constructed client-side (commit(), merge(), cherryPickFields())
+  z.object({ type: z.literal('SAVE_CAPSULE_REQUEST'), manifest: CapsuleManifestSchema }),
+  z.object({ type: z.literal('SAVE_CAPSULE_RESPONSE'), success: z.boolean() }),
   // Phase 8: A/B lift score
   z.object({
     type: z.literal('UPDATE_LIFT_SCORE_REQUEST'),

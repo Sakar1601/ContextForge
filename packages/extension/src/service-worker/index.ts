@@ -11,6 +11,7 @@ import { ContextForgeDB } from '../storage/db'
 import { CapsuleRepository } from '../storage/repositories/capsule-repository'
 import { BodyRepository } from '../storage/repositories/body-repository'
 import { ProvenanceRepository } from '../storage/repositories/provenance-repository'
+import { maybeEvict } from '../storage/eviction'
 
 const db = new ContextForgeDB()
 const capsuleRepo = new CapsuleRepository(db)
@@ -138,6 +139,13 @@ async function handleMessage(
       case 'BRANCH_LIST_REQUEST': {
         const stored = (await chrome.storage.local.get('branches')) as { branches?: Array<{ name: string; tipId: string }> }
         sendResponse({ type: 'BRANCH_LIST_RESPONSE', branches: stored.branches ?? [] })
+        break
+      }
+
+      case 'SAVE_CAPSULE_REQUEST': {
+        const manifest = msg.manifest as CapsuleManifest
+        await capsuleRepo.save(manifest)
+        sendResponse({ type: 'SAVE_CAPSULE_RESPONSE', success: true })
         break
       }
 
@@ -308,8 +316,9 @@ async function handleCapture(tabId: number, sendResponse: (r: unknown) => void) 
   await bodyRepo.save(body)
 
   sendResponse({ type: 'CAPTURE_RESPONSE', capsuleId: manifest.id })
-  // Embed in the background; does not block the response.
+  // Embed and evict in the background; neither blocks the response.
   void embedCapsuleInBackground(manifest.id)
+  void maybeEvict(capsuleRepo, bodyRepo).catch(() => { /* best-effort; retried on next capture */ })
   } catch (err) {
     sendResponse({ type: 'CAPTURE_RESPONSE', capsuleId: '', error: String(err) })
   }

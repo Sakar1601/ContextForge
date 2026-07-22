@@ -61,22 +61,28 @@ export function setupDropZone(
   }
 
   function handleDrop(e: DragEvent) {
+    if (!e.dataTransfer?.types.includes(DROP_MIME)) return
     e.preventDefault()
+    e.stopPropagation()
     hideOverlay()
-    const id = e.dataTransfer?.getData(DROP_MIME)
+    const id = e.dataTransfer.getData(DROP_MIME)
     if (id) onCapsuleDrop(id, window.innerWidth)
   }
 
+  // dragenter/dragover/dragleave stay on the normal bubble phase — they were already
+  // reaching us fine (the overlay showed on every site). Only 'drop' moves to the
+  // capture phase: composers with their own file-upload dropzone call stopPropagation()
+  // on 'drop' during the bubble phase, so we need to see and claim it before they do.
   document.addEventListener('dragenter', handleDragEnter)
   document.addEventListener('dragover', handleDragOver)
   document.addEventListener('dragleave', handleDragLeave)
-  document.addEventListener('drop', handleDrop)
+  document.addEventListener('drop', handleDrop, { capture: true })
 
   return () => {
     document.removeEventListener('dragenter', handleDragEnter)
     document.removeEventListener('dragover', handleDragOver)
     document.removeEventListener('dragleave', handleDragLeave)
-    document.removeEventListener('drop', handleDrop)
+    document.removeEventListener('drop', handleDrop, { capture: true })
     hideOverlay()
   }
 }

@@ -48,7 +48,7 @@ export function setupSuggest(composerSelector: string): () => void {
       btn.onclick = () => {
         void chrome.runtime.sendMessage({
           type: 'INJECT_REQUEST', capsuleId: m.id, windowWidth: window.innerWidth,
-        })
+        }).catch(() => {})
         removePanel()
       }
 
@@ -89,7 +89,10 @@ export function setupSuggest(composerSelector: string): () => void {
               const matched = ids.map((id) => all.find((m) => m.id === id)).filter(Boolean) as CapsuleManifest[]
               showPanel(matched)
             })
+            // Extension context invalidated after a reload/update — harmless, ignore.
+            .catch(() => {})
         })
+        .catch(() => {})
     }, DEBOUNCE_MS)
   }
 

@@ -5,7 +5,9 @@ import { setupSuggest } from './suggest'
 const adapter = new ClaudeAdapter()
 
 setupDropZone((capsuleId, windowWidth) => {
-  void chrome.runtime.sendMessage({ type: 'INJECT_REQUEST', capsuleId, windowWidth })
+  // Swallow rejections: after an extension reload/update, old tabs' sendMessage calls
+  // throw "Extension context invalidated" — unrecoverable here, harmless once the page reloads.
+  void chrome.runtime.sendMessage({ type: 'INJECT_REQUEST', capsuleId, windowWidth }).catch(() => {})
 })
 setupSuggest(SELECTORS.composer)
 

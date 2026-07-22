@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import ReactFlow, { Background, Controls, MiniMap, useEdgesState, useNodesState } from 'reactflow'
 import type { Node } from 'reactflow'
 import 'reactflow/dist/style.css'
-import { commit, merge } from '@contextforge/shared'
+import { commit, merge, cherryPickFields } from '@contextforge/shared'
 import type { CapsuleManifest, MergeResult } from '@contextforge/shared'
 import { buildLayout } from './layout'
 import { CapsuleNode } from './components/CapsuleNode'
@@ -111,7 +111,8 @@ export default function GraphApp() {
         parentIds: [selectedId, mergeTargetId],
         compressed: leftManifest.compressed,
       })
-      // Persist via SW capture path — for now just refresh
+      await chrome.runtime.sendMessage({ type: 'SAVE_CAPSULE_REQUEST', manifest: merged })
+      setManifests((prev) => [...prev, merged])
       setStatusMsg(`Merged into: ${merged.title}`)
       setTimeout(() => setStatusMsg(null), 3000)
     } else {
@@ -131,22 +132,42 @@ export default function GraphApp() {
       parentIds,
       compressed: leftManifest.compressed,
     })
+    await chrome.runtime.sendMessage({ type: 'SAVE_CAPSULE_REQUEST', manifest: merged })
+    setManifests((prev) => [...prev, merged])
     setPendingMerge(null)
     setStatusMsg(`Conflict resolved — merged as: ${merged.title}`)
     setTimeout(() => setStatusMsg(null), 3000)
   }
 
-  // ── cherry-pick ───────────────────────────────────────────────────────────
-  function handleCherryPick() {
+  // ── cherry-pick: copy fields from the selected capsule into the merge-target capsule ──
+  async function handleCherryPick() {
     if (!selectedManifest) return
+    if (!mergeTargetId) {
+      window.alert('Pick a target capsule from the "Merge with…" dropdown first — cherry-pick copies fields from the selected capsule into it.')
+      return
+    }
+    const targetManifest = manifests.find((m) => m.id === mergeTargetId)
+    if (!targetManifest) return
     const fields = window.prompt(
-      'Fields to cherry-pick (comma-separated):\ngoals, constraints, decisions, openQuestions, tags',
+      'Fields to cherry-pick from the selected capsule into the target (comma-separated):\ngoals, constraints, decisions, openQuestions, tags',
     )
     if (!fields?.trim()) return
     const keys = fields.split(',').map((f) => f.trim()) as Array<keyof CapsuleManifest>
-    const picked = Object.fromEntries(keys.map((k) => [k, selectedManifest[k]]))
-    setStatusMsg(`Cherry-picked: ${keys.join(', ')} — paste into another capsule via console: ${JSON.stringify(picked)}`)
-    setTimeout(() => setStatusMsg(null), 8000)
+    const picked = cherryPickFields(selectedManifest, keys)
+    const now = new Date().toISOString()
+    const merged = await commit({
+      ...targetManifest,
+      ...picked,
+      createdAt: targetManifest.createdAt,
+      updatedAt: now,
+      parentIds: [targetManifest.id],
+      compressed: targetManifest.compressed,
+    })
+    await chrome.runtime.sendMessage({ type: 'SAVE_CAPSULE_REQUEST', manifest: merged })
+    setManifests((prev) => [...prev, merged])
+    setMergeTargetId(null)
+    setStatusMsg(`Cherry-picked ${keys.join(', ')} into new commit: ${merged.title}`)
+    setTimeout(() => setStatusMsg(null), 3000)
   }
 
   // ── render ────────────────────────────────────────────────────────────────

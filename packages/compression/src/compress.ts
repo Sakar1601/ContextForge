@@ -70,7 +70,9 @@ export async function compress(
 ): Promise<CompressResult> {
   if (!apiKey) return { compressed: false, rawTurns: turns }
 
-  const client = new Anthropic({ apiKey })
+  // Only ever called from the service worker with the user's own key (see PRIVACY.md);
+  // dangerouslyAllowBrowser also makes the SDK send the header Anthropic's CORS gate requires.
+  const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true })
 
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
