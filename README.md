@@ -2,7 +2,7 @@
 
 > Capture AI conversations into reusable capsules. Inject context across ChatGPT, Claude, Gemini, Perplexity, DeepSeek, and Gmail — without copy-paste.
 
-[![CI](https://github.com/Sakar1601/ContextForge/actions/workflows/ci.yml/badge.svg)](https://github.com/Sakar1601/ContextForge/actions/workflows/ci.yml)
+[![CI](https://github.com/Sakar1601/ContextForge/actions/workflows/ci.yml/badge.svg)](https://github.com/Sakar1601/ContextForge/actions/workflows/ci.yml) ![License](https://img.shields.io/badge/license-MIT-blue)
 
 ---
 
@@ -120,3 +120,11 @@ All data stays on your device. See [docs/PRIVACY.md](docs/PRIVACY.md).
 ## Stack
 
 React 18 · TypeScript strict · Vite + CRXJS · Dexie.js · @xenova/transformers · Anthropic SDK · React Flow · Vitest · Playwright · pnpm workspaces
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for how to report a vulnerability. Never commit real credentials; use `.env.example` as the template for local configuration.
+
+## License
+
+Released under the [MIT License](LICENSE).
