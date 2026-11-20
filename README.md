@@ -1,4 +1,4 @@
-# ContextForge
+<h1 align="center"><img src="docs/images/banner.svg" alt="ContextForge: Capture AI conversations as reusable capsules."></h1>
 
 > Capture AI conversations into reusable capsules. Inject context across ChatGPT, Claude, Gemini, Perplexity, DeepSeek, and Gmail — without copy-paste.
 
@@ -71,6 +71,18 @@ In Chrome: `chrome://extensions` → **Developer mode ON** → **Load unpacked**
 
 ---
 
+## Architecture
+
+```mermaid
+flowchart LR
+  AD[Platform adapters<br/>ChatGPT, Claude, Gemini, ...] --> CS[Content scripts]
+  CS --> SW[Service worker<br/>message router]
+  SW --> CMP[compression<br/>Anthropic extraction]
+  SW --> RET[retrieval<br/>BM25 + embeddings]
+  SW --> DX[(Dexie / IndexedDB<br/>local capsules)]
+  UI[Popup + version graph] --> SW
+```
+
 ## Development
 
 ```bash
@@ -121,9 +133,21 @@ All data stays on your device. See [docs/PRIVACY.md](docs/PRIVACY.md).
 
 React 18 · TypeScript strict · Vite + CRXJS · Dexie.js · @xenova/transformers · Anthropic SDK · React Flow · Vitest · Playwright · pnpm workspaces
 
+## Testing and CI
+
+`.github/workflows/ci.yml` runs typecheck, lint and unit tests (`pnpm check`) on every push and pull request. Playwright E2E runs locally with `pnpm test:e2e`.
+
+## Status
+
+Under active development; see `docs/ROADMAP.md` and the ADRs in `docs/adr/`.
+
+## Contributing
+
+Contributions are welcome; read [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md) first.
+
 ## Security
 
-See [SECURITY.md](SECURITY.md) for how to report a vulnerability. Never commit real credentials; use `.env.example` as the template for local configuration.
+Report vulnerabilities privately; see [SECURITY.md](SECURITY.md).
 
 ## License
 
