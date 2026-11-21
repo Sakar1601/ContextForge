@@ -6,9 +6,10 @@ import type { ConversationTurn } from '@contextforge/shared'
 vi.mock('@anthropic-ai/sdk', () => {
   const mockCreate = vi.fn()
   return {
-    default: vi.fn().mockImplementation(() => ({
-      beta: { messages: { create: mockCreate } },
-    })),
+    // Vitest 4: a mock used with `new` must be implemented with `function`, not an arrow.
+    default: vi.fn().mockImplementation(function () {
+      return { beta: { messages: { create: mockCreate } } }
+    }),
     __mockCreate: mockCreate,
   }
 })

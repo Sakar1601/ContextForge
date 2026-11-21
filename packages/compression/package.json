@@ -9,6 +9,6 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.36.0",
     "@contextforge/shared": "workspace:*",
-    "zod": "^3.23.0"
+    "zod": "^4.6.7"
   }
 }
