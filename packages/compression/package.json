@@ -7,7 +7,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.36.0",
+    "@anthropic-ai/sdk": "^1.13.0",
     "@contextforge/shared": "workspace:*",
     "zod": "^4.6.7"
   }
